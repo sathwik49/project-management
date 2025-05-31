@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("LOCAL_DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  profilePicture String?
+  isActive       Boolean   @default(true)
+  lastLogin      DateTime?
+
+  currentWorkspaceId String?
+  currentWorkspace   Workspace? @relation("CurrentWorkspace", fields: [currentWorkspaceId], references: [id] , onDelete: Cascade)
+
+  accounts        Account[]
+  workspacesOwned Workspace[] @relation("WorkspaceOwner")
+  memberships     Member[]
+  projectsCreated Project[]   @relation("ProjectsCreated")
+  tasksAssigned   Task[]      @relation("TasksAssigned")
+  tasksCreated    Task[]      @relation("TasksCreated")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id            String    @id @default(cuid())
+  provider      String
+  providerId    String    @unique
+  password      String?
+  emailVerified Boolean?
+  refreshToken  String?
+  tokenExpiry   DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accounts")
+}
+
+model Workspace {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  inviteCode  String  @unique
+
+  ownerId String
+  owner   User   @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  members  Member[]
+  projects Project[]
+  tasks    Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User[] @relation("CurrentWorkspace")
+
+  @@map("workspaces")
+}
+
+model Member {
+  id          String      @id @default(cuid())
+  userId      String
+  workspaceId String
+  roleId      ProjectRole
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role      Role      @relation("RoleToMembers", fields: [roleId], references: [name], onDelete: Cascade)
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("members")
+}
+
+model Role {
+  name        ProjectRole         @id
+  permissions ProjectPermission[]
+
+  members Member[] @relation("RoleToMembers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  image       String?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("ProjectsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("projects")
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  taskCode    String       @unique
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime
+
+  projectId    String
+  workspaceId  String
+  assignedToId String
+  createdById  String
+
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTo User      @relation("TasksAssigned", fields: [assignedToId], references: [id], onDelete: Cascade)
+  createdBy  User      @relation("TasksCreated", fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BACKLOG
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ProjectPermission {
+  CREATE_WORKSPACE
+  DELETE_WORKSPACE
+  EDIT_WORKSPACE
+  MANAGE_WORKSPACE_SETTINGS
+
+  ADD_MEMBER
+  CHANGE_MEMBER_ROLE
+  REMOVE_MEMBER
+
+  CREATE_PROJECT
+  EDIT_PROJECT
+  DELETE_PROJECT
+
+  CREATE_TASK
+  EDIT_TASK
+  DELETE_TASK
+
+  VIEW_ONLY
+}
