@@ -37,7 +37,7 @@ model Account {
   provider      String
   providerId    String    @unique
   password      String?
-  emailVerified Boolean?
+  emailVerified Boolean  @default(false)
   refreshToken  String?
   tokenExpiry   DateTime?
 

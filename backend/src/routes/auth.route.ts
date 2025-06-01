@@ -1,7 +1,7 @@
 import { Router } from "express";
 import passport from "passport"
 import { appConfig } from "../config/appConfig";
-import { googleLogin } from "../controllers/auth.controller";
+import { emailVerificationController, googleLogin, userLoginController, userLogoutController, userRegistrationController } from "../controllers/auth.controller";
 
 const authRouter = Router()
 
@@ -19,5 +19,10 @@ authRouter.get("/google/callback",
     }),
     googleLogin
 )
+
+authRouter.post("/register",userRegistrationController)
+authRouter.post("/login",userLoginController)
+authRouter.post("/verify-email/:id",emailVerificationController)
+authRouter.post("/logout",userLogoutController)
 
 export default authRouter;

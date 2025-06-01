@@ -4,7 +4,6 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20"
 import { appConfig } from "./appConfig"
 import { NotFoundError } from "../utils/error"
 import { loginOrCreateAccountService } from "../services/auth.service"
-import { getUserById } from "../utils/get-user"
 
 passport.use(
     new GoogleStrategy({

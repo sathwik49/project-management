@@ -3,5 +3,5 @@ export interface UserInterface {
   name: String;
   email: String;
   profilePicture?:String | null;
-  currentWorkspaceId?: String | null;
+  currentWorkspaceId: String | null;
 }

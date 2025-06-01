@@ -1,9 +1,26 @@
 import { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/error";
+import { ZodError } from "zod";
+
+const formatZodError = (error:ZodError,res:Response) => {
+    const errors = error.issues.map((err)=>({
+        field:err.path[0],
+        message:err.message
+    }))
+
+    return res.status(400).json({
+        message:"Validation Failed",
+        error:errors
+    })
+}
 
 const errorHandler:ErrorRequestHandler = (err, req, res, next):any => {
 
     //Handle Zod Error
+    if(err instanceof ZodError){
+        return formatZodError(err,res);
+    }
+
     if(err instanceof AppError){
         console.log(`Error: ${req.method} ${req.url} - ${err.message}`);
 
@@ -17,8 +34,7 @@ const errorHandler:ErrorRequestHandler = (err, req, res, next):any => {
     console.log(err);
 
     return res.status(500).json({
-        message:"Internal Server error",
-        error:err.message || "Something Went Wrong"
+        message:err.message || "Internal Server error",
     })
 }
 
