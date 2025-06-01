@@ -5,6 +5,7 @@ import { compareValues, hashValue } from "../utils/hashValue";
 import checkEmailVerificationAndSendMail from "../utils/mails/emailVerification";
 import redis from "../utils/redis";
 import { Request } from "express";
+import { deleteEmailVerificationTokens } from "../utils/user";
 
 interface Props {
   provider: string;
@@ -227,7 +228,7 @@ export const userLoginService = async (
   }
 
   if (!isEmailUser.emailVerified) {
-    if (await redis.get(`:${email}`)) {
+    if ((await redis.get(`email:${email}`))) {
       return { message: "Please verify your email" };
     }
     await checkEmailVerificationAndSendMail(email);
@@ -278,6 +279,7 @@ export const emailVerificationService = async (token: string, req: Request) => {
       user:{}
     }
   });
+  await deleteEmailVerificationTokens(token);
 
   const updatedUser = {
     id:userWithAccount.user.id,
@@ -287,7 +289,11 @@ export const emailVerificationService = async (token: string, req: Request) => {
     currentWorkspaceId:userWithAccount.user.currentWorkspaceId,
   }
 
-  req.logIn(updatedUser,(err)=>{
+  const user = await prisma.user.findFirst({
+    where:{email:updatedUser.email}
+  }) as Express.User
+
+  req.logIn(user,(err)=>{
     if(err) throw err;
   })
 

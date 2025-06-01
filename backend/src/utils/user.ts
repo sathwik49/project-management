@@ -31,3 +31,9 @@ export const checkEmailVerificationToken = async (token:string) => {
     const isTokenAvailable = await redis.get(token);
     return isTokenAvailable;
 }
+
+export const deleteEmailVerificationTokens = async (token:string) => {
+    const email = await redis.get(`token:${token}`)
+    await redis.del(`token:${token}`)
+    await redis.del(`email:${email}`)
+}
