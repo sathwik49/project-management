@@ -28,6 +28,12 @@ export class AuthError extends AppError{
     }
 }
 
+export class UnAuthorizedError extends AppError{
+    constructor(message = "UnAuthorized"){
+        super(message,401);
+    }
+}
+
 export class ForbiddenError extends AppError{
     constructor(message = "Forbidden"){
         super(message,403);

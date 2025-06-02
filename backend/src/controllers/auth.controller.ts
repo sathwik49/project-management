@@ -4,7 +4,7 @@ import { UserInterface } from "../utils/interfaces";
 import {
   userLoginSchema,
   userRegistrationSchema,
-} from "../validations/auth.user";
+} from "../validations/auth";
 import { ValidationError } from "../utils/error";
 import {
   emailVerificationService,
@@ -100,7 +100,6 @@ export const userLogoutController = asyncHandler(
     // })
 
     req.session.destroy((err)=>{
-      console.log(err)
       if(err) throw new Error("Couldn't logout.Please try again");
     })
     return res.status(200).json({message:"Logged out successfully"})

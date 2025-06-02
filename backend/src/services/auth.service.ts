@@ -148,7 +148,6 @@ export const userRegistrationService = async (data: {
         name: "OWNER",
       },
     });
-    
 
     if (!userRole) {
       throw new NotFoundError("User Role Not found in DB");
@@ -175,14 +174,14 @@ export const userRegistrationService = async (data: {
       profilePicture: updatedUser.profilePicture || null,
       currentWorkspaceId: updatedUser.currentWorkspaceId,
     };
-    const emailResponse = await checkEmailVerificationAndSendMail(user.email);
-
-    if(!emailResponse){
-      return {message:"Couldn't send mail.Please try again"}
-    }
 
     return userDetails;
   });
+  const emailResponse = await checkEmailVerificationAndSendMail(user.email);
+
+  if (!emailResponse) {
+    return { message: "Account has been created but couldn't send verification mail.Please click on resend mail" };
+  }
   return {
     message: "Verification Link sent",
     details: user,
@@ -195,10 +194,11 @@ export const userLoginService = async (
 ) => {
   const { email, password } = data;
   const user = await prisma.user.findFirst({
-    where: { email }
+    where: { email },
   });
 
   if (!user) {
+    console.log(user)
     throw new AppError("No user found with this email", 400);
   }
 
@@ -228,15 +228,18 @@ export const userLoginService = async (
   }
 
   if (!isEmailUser.emailVerified) {
-    if ((await redis.get(`email:${email}`))) {
+    if (await redis.get(`email:${email}`)) {
       return { message: "Please verify your email" };
     }
     await checkEmailVerificationAndSendMail(email);
     return { message: "Verification Email sent.Please verify your email." };
   }
 
-  req.logIn(user, (err) => {
-    if (err) throw err;
+  await new Promise<void>((resolve, reject) => {
+    req.logIn(user, (err) => {
+      if (err) return reject(err);
+      resolve();
+    });
   });
 
   const updatedUser = await prisma.user.update({
@@ -247,14 +250,13 @@ export const userLoginService = async (
   });
 
   return {
-    id:updatedUser.id,
-    name:updatedUser.name,
-    email:updatedUser.email,
-    profilePicture:updatedUser.profilePicture,
-    currentWorkspaceId:updatedUser.currentWorkspaceId
+    id: updatedUser.id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    profilePicture: updatedUser.profilePicture,
+    currentWorkspaceId: updatedUser.currentWorkspaceId,
   };
 };
-
 
 export const emailVerificationService = async (token: string, req: Request) => {
   const isTokenAvailable = await redis.get(`token:${token}`);
@@ -275,28 +277,28 @@ export const emailVerificationService = async (token: string, req: Request) => {
         },
       },
     },
-    include:{
-      user:{}
-    }
+    include: {
+      user: {},
+    },
   });
   await deleteEmailVerificationTokens(token);
 
   const updatedUser = {
-    id:userWithAccount.user.id,
-    name:userWithAccount.user.name,
-    email:userWithAccount.user.email,
-    profilePicture:userWithAccount.user.profilePicture,
-    currentWorkspaceId:userWithAccount.user.currentWorkspaceId,
-  }
+    id: userWithAccount.user.id,
+    name: userWithAccount.user.name,
+    email: userWithAccount.user.email,
+    profilePicture: userWithAccount.user.profilePicture,
+    currentWorkspaceId: userWithAccount.user.currentWorkspaceId,
+  };
 
-  const user = await prisma.user.findFirst({
-    where:{email:updatedUser.email}
-  }) as Express.User
+  const user = userWithAccount.user;
 
-  req.logIn(user,(err)=>{
-    if(err) throw err;
-  })
+  await new Promise<void>((resolve, reject) => {
+    req.logIn(user, (err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
 
-  return {updatedUser}
-  
+  return { updatedUser };
 };

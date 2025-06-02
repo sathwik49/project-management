@@ -21,6 +21,12 @@ const errorHandler:ErrorRequestHandler = (err, req, res, next):any => {
         return formatZodError(err,res);
     }
 
+    if(err instanceof SyntaxError){
+        return res.status(400).json({
+            message:"Invalid data format"
+        })
+    }
+
     if(err instanceof AppError){
         console.log(`Error: ${req.method} ${req.url} - ${err.message}`);
 

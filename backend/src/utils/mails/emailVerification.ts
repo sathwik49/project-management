@@ -24,7 +24,8 @@ const checkEmailVerificationAndSendMail = async (email:string) => {
     })
 
     if(!user?.emailVerified){
-        const token = genUUid(10);
+        const token = genUUid(15);
+        console.log(token)
         const userName = user?.user.name as string
         const verificationLink = `${appConfig.FRONTEND_ORIGIN}/verify/${token}`
         const emailHtml = await render(React.createElement(EmailVerification,{userName,verificationLink}))
@@ -37,7 +38,8 @@ const checkEmailVerificationAndSendMail = async (email:string) => {
         })
 
         if(error){
-            throw new Error("Couldn't send mail.Please try again");
+            return null;
+            //throw new Error("Couldn't send mail.Please try again");
         }
         await setUserVerificationToken(token,email);
         return true;
