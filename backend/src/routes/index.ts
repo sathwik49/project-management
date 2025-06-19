@@ -3,11 +3,13 @@ import authRouter from "./auth.route";
 import userRouter from "./user.route";
 import isAuthenticated from "../middlewares/isAuthenticated";
 import workspaceRouter from "./workspace.route";
+import memberRouter from "./member.route";
 
 const mainRouter = Router()
 
 mainRouter.use("/auth",authRouter);
 mainRouter.use("/user",isAuthenticated,userRouter)
 mainRouter.use("/workspace",isAuthenticated,workspaceRouter)
+mainRouter.use("/member",isAuthenticated,memberRouter)
 
 export default mainRouter;

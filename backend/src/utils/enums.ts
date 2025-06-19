@@ -43,6 +43,7 @@ export const RolePermissions = {
     ProjectPermission.CREATE_TASK,
     ProjectPermission.EDIT_TASK,
     ProjectPermission.DELETE_TASK,
+    ProjectPermission.VIEW_ONLY,
   ],
   ADMIN: [
     ProjectPermission.EDIT_WORKSPACE,
@@ -57,6 +58,7 @@ export const RolePermissions = {
     ProjectPermission.CREATE_TASK,
     ProjectPermission.EDIT_TASK,
     ProjectPermission.DELETE_TASK,
+    ProjectPermission.VIEW_ONLY,
   ],
   MEMBER: [
     ProjectPermission.VIEW_ONLY,
