@@ -1,6 +1,6 @@
 import { prisma } from "../config/db";
 import { $Enums } from "../generated/prisma";
-import { AuthError, DataBaseError, NotFoundError } from "../utils/error";
+import { AuthError, BadRequestError, DataBaseError, NotFoundError } from "../utils/error";
 import { genUUid } from "../utils/gen-uuid";
 
 export const createWorkspaceService = async (
@@ -21,6 +21,16 @@ export const createWorkspaceService = async (
   });
   if (!ownerRole) {
     throw new NotFoundError("Owner role not found");
+  }
+
+  const isExistingWorkspace = await prisma.workspace.findFirst({
+    where:{
+      name:data.name,
+      ownerId:userId
+    }
+  })
+  if(isExistingWorkspace){
+    throw new BadRequestError("Workspace name must be unique")
   }
 
   const workspace = await prisma.workspace.create({
@@ -230,6 +240,7 @@ export const changeMemberRoleService = async (
 
 export const updateWorkspaceByIdService = async (
   workspaceId: string,
+  userId:string,
   name: string,
   description?: string
 ) => {
@@ -240,6 +251,16 @@ export const updateWorkspaceByIdService = async (
   });
   if (!workspace) {
     throw new NotFoundError("Workspace not found");
+  }
+
+  const isExistingWorkspace = await prisma.workspace.findFirst({
+    where:{
+      name:name,
+      ownerId:userId
+    }
+  })
+  if(isExistingWorkspace){
+    throw new BadRequestError("Workspace name must be unique")
   }
 
   const updatedWorkspace = await prisma.workspace.update({

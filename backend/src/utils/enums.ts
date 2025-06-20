@@ -1,3 +1,5 @@
+import { $Enums } from "../generated/prisma";
+
 export enum ProjectPermission {
   CREATE_WORKSPACE = "CREATE_WORKSPACE",
   DELETE_WORKSPACE = "DELETE_WORKSPACE",
@@ -24,6 +26,23 @@ export enum ProjectRole {
   ADMIN = "ADMIN",
   MEMBER = "MEMBER",
 }
+
+export enum TaskStatusEnum {
+  TODO = "TODO",
+  IN_PROGRESS = "IN_PROGRESS",
+  IN_REVIEW = "IN_REVIEW",
+  DONE = "DONE",
+  BACKLOG = "BACKLOG",
+}
+
+export enum TaskPriorityEnum {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
+
+export type TaskStatusEnumType = typeof TaskStatusEnum
+export type TaskPriorityEnumType = typeof TaskPriorityEnum
 
 export const RolePermissions = {
   OWNER: [

@@ -4,7 +4,7 @@ import { UserInterface } from "../utils/interfaces";
 import {
   userLoginSchema,
   userRegistrationSchema,
-} from "../validations/auth";
+} from "../validations/auth.validation";
 import { ValidationError } from "../utils/error";
 import {
   emailVerificationService,

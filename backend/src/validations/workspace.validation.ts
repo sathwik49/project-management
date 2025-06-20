@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const workspaceNameSchema = z.string().trim().min(1,{message:"workspace name is required"}).max(150,{message:"Max only 150 chars"})
+export const workspaceNameSchema = z.string().trim().min(1,{message:"Workspace name is required"}).max(150,{message:"Max only 150 chars"})
 export const workspaceDescriptionSchema = z.string().trim().optional()
 export const workspaceIdSchema = z.string().min(1,{message:"Workspace Id is required"})
 export const changeMemberRoleSchema = z.object({

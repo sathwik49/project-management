@@ -15,14 +15,14 @@ export const createProjectService = async (
     throw new NotFoundError("Workspace Not Found.Check WorkspaceId");
   }
 
-  const existingName = await prisma.project.findFirst({
+  const isExistingProject = await prisma.project.findFirst({
     where: {
       name: name,
       workspaceId: workspaceId,
     },
   });
-  if (existingName) {
-    throw new BadRequestError("Project Name must be different");
+  if (isExistingProject) {
+    throw new BadRequestError("Project name must be unique");
   }
 
   const project = await prisma.project.create({
@@ -190,6 +190,16 @@ export const updateProjectService = async (
     throw new NotFoundError(
       "Project not found or Project doesn't exist in the workspace"
     );
+  }
+
+   const isExistingProject = await prisma.project.findFirst({
+    where: {
+      name: name,
+      workspaceId: workspaceId,
+    },
+  });
+  if (isExistingProject) {
+    throw new BadRequestError("Project name must be unique");
   }
 
   const updatedProject = await prisma.project.update({

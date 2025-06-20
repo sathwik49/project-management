@@ -5,7 +5,7 @@ import { UserInterface } from "../utils/interfaces";
 import {
   createProjectSchema,
   updateProjectSchema,
-} from "../validations/project";
+} from "../validations/project.validation";
 import { ZodError } from "zod";
 import {
   createProjectService,

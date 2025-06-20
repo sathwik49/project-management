@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import asyncHandler from "../middlewares/asyncHandler";
 import { changeMemberRoleService, createWorkspaceService, deleteWorkspaceByIdService, getUserWorkspacesService, getWorkspaceAnalyticsService, getWorkspaceByIdService, getWorkspaceMembersService, updateWorkspaceByIdService } from "../services/workspace.service";
-import { changeMemberRoleSchema, createWorkspaceSchema, updateWorkspaceSchema } from "../validations/workspace";
+import { changeMemberRoleSchema, createWorkspaceSchema, updateWorkspaceSchema } from "../validations/workspace.validation";
 import { ZodError } from "zod";
 import { UserInterface } from "../utils/interfaces";
 import { AppError, AuthError, ValidationError } from "../utils/error";
@@ -158,7 +158,7 @@ export const updateWorkspaceByIdController = asyncHandler(
         const role = await getMemberRoleInWorkspace(userId,workspaceId)
         roleGuard(role,[ProjectPermission.EDIT_WORKSPACE])
 
-        const workspace = await updateWorkspaceByIdService(workspaceId,name,description)
+        const workspace = await updateWorkspaceByIdService(workspaceId,userId,name,description)
 
         return res.status(200).json({
             message:"Updated workspace successfully",
