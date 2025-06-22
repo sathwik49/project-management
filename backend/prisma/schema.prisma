@@ -17,7 +17,7 @@ model User {
   lastLogin      DateTime?
 
   currentWorkspaceId String?
-  currentWorkspace   Workspace? @relation("CurrentWorkspace", fields: [currentWorkspaceId], references: [id] , onDelete: Cascade)
+  currentWorkspace   Workspace? @relation("CurrentWorkspace", fields: [currentWorkspaceId], references: [id], onDelete: Cascade)
 
   accounts        Account[]
   workspacesOwned Workspace[] @relation("WorkspaceOwner")
@@ -37,7 +37,7 @@ model Account {
   provider      String
   providerId    String    @unique
   password      String?
-  emailVerified Boolean  @default(false)
+  emailVerified Boolean   @default(false)
   refreshToken  String?
   tokenExpiry   DateTime?
 
@@ -48,6 +48,19 @@ model Account {
   updatedAt DateTime @updatedAt
 
   @@map("accounts")
+}
+
+model Verification {
+  id    String @id @default(cuid())
+  email String
+  token String  @unique
+  expires DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email,token])
+  @@map("verification")
 }
 
 model Workspace {
@@ -67,8 +80,8 @@ model Workspace {
   updatedAt DateTime @updatedAt
 
   user User[] @relation("CurrentWorkspace")
-  @@unique([name,ownerId,inviteCode])
 
+  @@unique([name, ownerId, inviteCode])
   @@map("workspaces")
 }
 
@@ -86,8 +99,7 @@ model Member {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId,workspaceId])
-
+  @@unique([userId, workspaceId])
   @@map("members")
 }
 
@@ -120,15 +132,14 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([workspaceId,name])
-
+  @@index([workspaceId, name])
   @@map("projects")
 }
 
 model Task {
   id          String       @id @default(cuid())
   taskCode    String       @unique
-  title       String      
+  title       String
   description String?
   status      TaskStatus   @default(TODO)
   priority    TaskPriority @default(MEDIUM)
@@ -146,8 +157,8 @@ model Task {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  @@index([title,projectId])
 
+  @@index([title, projectId])
   @@map("tasks")
 }
 

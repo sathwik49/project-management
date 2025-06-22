@@ -3,9 +3,9 @@ import { AppError, NotFoundError } from "../utils/error";
 import { genUUid } from "../utils/gen-uuid";
 import { compareValues, hashValue } from "../utils/hashValue";
 import checkEmailVerificationAndSendMail from "../utils/mails/emailVerification";
-import redis from "../utils/redis";
 import { Request } from "express";
-import { deleteEmailVerificationTokens } from "../utils/user";
+import { checkEmailVerificationToken, deleteEmailVerificationTokens } from "../utils/tokens";
+import { checkIsEmailVerified } from "../utils/user";
 
 interface Props {
   provider: string;
@@ -198,7 +198,7 @@ export const userLoginService = async (
   });
 
   if (!user) {
-    console.log(user)
+    //console.log(user)
     throw new AppError("No user found with this email", 400);
   }
 
@@ -228,7 +228,7 @@ export const userLoginService = async (
   }
 
   if (!isEmailUser.emailVerified) {
-    if (await redis.get(`email:${email}`)) {
+    if (await checkIsEmailVerified(email)) {
       return { message: "Please verify your email" };
     }
     await checkEmailVerificationAndSendMail(email);
@@ -259,15 +259,19 @@ export const userLoginService = async (
 };
 
 export const emailVerificationService = async (token: string, req: Request) => {
-  const isTokenAvailable = await redis.get(`token:${token}`);
+  const isTokenAvailable = await checkEmailVerificationToken(token)
 
-  if (!isTokenAvailable) {
+  if (!isTokenAvailable?.token) {
     return { message: "Invalid or Expired Verification Link." };
+  }
+  const hasExpired = isTokenAvailable.expires < new Date()
+  if(hasExpired){
+    return { message:"Token expired" }
   }
 
   const userWithAccount = await prisma.account.update({
     where: {
-      providerId: isTokenAvailable,
+      providerId: isTokenAvailable.email,
     },
     data: {
       emailVerified: true,
@@ -281,7 +285,7 @@ export const emailVerificationService = async (token: string, req: Request) => {
       user: {},
     },
   });
-  await deleteEmailVerificationTokens(token);
+  await deleteEmailVerificationTokens(isTokenAvailable.token,userWithAccount.providerId);
 
   const updatedUser = {
     id: userWithAccount.user.id,

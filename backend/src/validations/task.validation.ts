@@ -7,8 +7,8 @@ export const TaskIdSchema = z.string().min(1,{message:"Task Id is required"})
 export const dueDateSchema = z.string().datetime({message:"Invalid Date format"})
 export const assignedToSchema = z.string().trim().min(1,{message:"UserId required"}).max(150,{message:"Max only 150 chars"}).optional()
 
-export const TaskStatusSchema =  z.enum(["TODO","IN_PROGRESS","IN_REVIEW","DONE","BACKLOG"])
-export const TaskPrioritySchema = z.enum(["HIGH","LOW","MEDIUM"])
+export const TaskStatusSchema =  z.enum(["TODO","IN_PROGRESS","IN_REVIEW","DONE","BACKLOG"]).optional()
+export const TaskPrioritySchema = z.enum(["HIGH","LOW","MEDIUM"]).optional()
 
 export const createTaskSchema = z.object({
     title:taskTitleSchema,

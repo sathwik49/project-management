@@ -22,8 +22,8 @@ export const createTaskService = async (
     description?: string;
     dueDate: string;
     assignedTo?: string;
-    status: $Enums.TaskStatus;
-    priority: $Enums.TaskPriority;
+    status?: $Enums.TaskStatus;
+    priority?: $Enums.TaskPriority;
   }
 ) => {
   const { title, description, dueDate, assignedTo, status, priority } = body;

@@ -28,11 +28,12 @@ export const createTaskController = asyncHandler(
 
     const validation = createTaskSchema.safeParse(req.body);
     if (!validation.success) {
-      console.log(validation.error.errors)
+      //console.log(validation.error.errors)
       throw new ZodError(validation.error.errors);
     }
 
     const role = await getMemberRoleInWorkspace(userId,workspaceId)
+    //console.log(role)
     roleGuard(role,[ProjectPermission.CREATE_TASK])
     const task = await createTaskService(projectId,workspaceId,userId,validation.data)
 
@@ -67,7 +68,7 @@ export const updateTaskController = asyncHandler(
 
     const validation = updateTaskSchema.safeParse(req.body);
     if (!validation.success) {
-      console.log(validation.error.errors)
+      //console.log(validation.error.errors)
       throw new ZodError(validation.error.errors);
     }
 

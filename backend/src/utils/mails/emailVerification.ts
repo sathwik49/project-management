@@ -6,7 +6,7 @@ import { genUUid } from "../gen-uuid";
 import resend from "./resend";
 import React from "react";
 import { AppError } from "../error";
-import { setUserVerificationToken } from "../user";
+import { setUserVerificationToken } from "../tokens";
 
 const checkEmailVerificationAndSendMail = async (email:string) => {
     const user = await prisma.account.findFirst({
@@ -25,7 +25,7 @@ const checkEmailVerificationAndSendMail = async (email:string) => {
 
     if(!user?.emailVerified){
         const token = genUUid(15);
-        console.log(token)
+        //console.log(token)
         const userName = user?.user.name as string
         const verificationLink = `${appConfig.FRONTEND_ORIGIN}/verify/${token}`
         const emailHtml = await render(React.createElement(EmailVerification,{userName,verificationLink}))
