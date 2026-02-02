@@ -59,10 +59,10 @@ export const userLoginController = asyncHandler(
       });
     }
 
-    return res.redirect(
-      `${appConfig.FRONTEND_ORIGIN}/workspace/${user.currentWorkspaceId}`
-    )
-    //return res.status(200).json({ message: "Logged in successfully",details:user });
+    // return res.redirect(
+    //   `${appConfig.FRONTEND_ORIGIN}/workspace/${user.currentWorkspaceId}`
+    // )
+    return res.status(200).json({ message: "Logged in successfully",details:user });
   }
 );
 

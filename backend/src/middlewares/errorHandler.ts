@@ -10,7 +10,7 @@ const formatZodError = (error:ZodError,res:Response) => {
 
     return res.status(400).json({
         message:"Validation Failed",
-        error:errors
+        details:errors
     })
 }
 

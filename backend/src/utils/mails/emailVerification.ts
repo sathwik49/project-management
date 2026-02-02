@@ -27,7 +27,7 @@ const checkEmailVerificationAndSendMail = async (email:string) => {
         const token = genUUid(15);
         //console.log(token)
         const userName = user?.user.name as string
-        const verificationLink = `${appConfig.FRONTEND_ORIGIN}/verify/${token}`
+        const verificationLink = `${appConfig.FRONTEND_ORIGIN}/verify-email/${token}`
         const emailHtml = await render(React.createElement(EmailVerification,{userName,verificationLink}))
 
         const { data,error } = await resend.emails.send({

@@ -180,7 +180,7 @@ export const userRegistrationService = async (data: {
   const emailResponse = await checkEmailVerificationAndSendMail(user.email);
 
   if (!emailResponse) {
-    return { message: "Account has been created but couldn't send verification mail.Please click on resend mail" };
+    throw new AppError("Account has been created but couldn't send verification mail.Please click on resend mail")
   }
   return {
     message: "Verification Link sent",
@@ -231,8 +231,10 @@ export const userLoginService = async (
     if (await checkIsEmailVerified(email)) {
       return { message: "Please verify your email" };
     }
-    await checkEmailVerificationAndSendMail(email);
-    return { message: "Verification Email sent.Please verify your email." };
+    const emailResponse = await checkEmailVerificationAndSendMail(email);
+    if (!emailResponse) {
+    throw new AppError("Couldn't send verification mail.Please click on resend mail")
+  }
   }
 
   await new Promise<void>((resolve, reject) => {

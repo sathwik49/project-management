@@ -77,7 +77,15 @@ export const getUserWorkspacesService = async (userId: string) => {
       userId: userId,
     },
     select: {
-      workspace: true,
+      workspace:{
+        select:{
+          id:true,
+          name:true,
+          description:true,
+          ownerId:true,
+          inviteCode:true
+        }
+      }
     },
   });
   if (memberships.length === 0) {

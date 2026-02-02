@@ -13,7 +13,8 @@ export const createWorkspaceController = asyncHandler(
     async (req:Request,res:Response,next:NextFunction ) => {
         const validation = createWorkspaceSchema.safeParse(req.body);
         if(!validation.success){
-            throw new ZodError(validation.error.issues)
+            console.log(validation.data)
+            throw new ZodError(validation.error.errors)
         }
         const { id:userId } = req.user as UserInterface
         if(!userId){
