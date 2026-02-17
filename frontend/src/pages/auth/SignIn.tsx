@@ -8,7 +8,7 @@ import {
   type signInInputType,
 } from "../../validations/auth.validation";
 import { useMutation } from "@tanstack/react-query";
-import { signInMutation } from "../../api/auth";
+import { signInMutation } from "../../api/api";
 import { CircleLoader } from "react-spinners";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";

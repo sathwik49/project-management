@@ -8,7 +8,7 @@ import {
   type signUpInputType,
 } from "../../validations/auth.validation";
 import { useMutation } from "@tanstack/react-query";
-import { signUpMutation } from "../../api/auth";
+import { signUpMutation } from "../../api/api";
 import { CircleLoader } from "react-spinners";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -42,7 +42,7 @@ export default function SignUp() {
         reset();
       },
       onError(error) {
-       // console.log(error);
+        // console.log(error);
         if (axios.isAxiosError(error)) {
           const data: signUpResponseType = error.response?.data;
           console.log(data.message);

@@ -16,7 +16,8 @@ export const getCurrentUserController = asyncHandler(
 
         return res.status(200).json({
             message:"User Fetched successfully",
-            user: user
+            success:true,
+            details:user
         })
     }
 )

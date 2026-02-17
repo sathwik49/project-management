@@ -4,7 +4,10 @@ import { genUUid } from "../utils/gen-uuid";
 import { compareValues, hashValue } from "../utils/hashValue";
 import checkEmailVerificationAndSendMail from "../utils/mails/emailVerification";
 import { Request } from "express";
-import { checkEmailVerificationToken, deleteEmailVerificationTokens } from "../utils/tokens";
+import {
+  checkEmailVerificationToken,
+  deleteEmailVerificationTokens,
+} from "../utils/tokens";
 import { checkIsEmailVerified } from "../utils/user";
 
 interface Props {
@@ -180,17 +183,20 @@ export const userRegistrationService = async (data: {
   const emailResponse = await checkEmailVerificationAndSendMail(user.email);
 
   if (!emailResponse) {
-    throw new AppError("Account has been created but couldn't send verification mail.Please click on resend mail")
+    throw new AppError(
+      "Account has been created but couldn't send verification mail.Please click on resend mail",
+    );
   }
   return {
     message: "Verification Link sent",
-    details: user,
+    details: null,
+    success: true,
   };
 };
 
 export const userLoginService = async (
   data: { email: string; password: string },
-  req: Request
+  req: Request,
 ) => {
   const { email, password } = data;
   const user = await prisma.user.findFirst({
@@ -214,13 +220,13 @@ export const userLoginService = async (
   if (!isEmailUser) {
     throw new AppError(
       "Email is registered with Other Providers.Please try through Google/Others",
-      400
+      400,
     );
   }
 
   const isPasswordsMatching = await compareValues(
     password,
-    isEmailUser.password as string
+    isEmailUser.password as string,
   );
 
   if (!isPasswordsMatching) {
@@ -229,12 +235,18 @@ export const userLoginService = async (
 
   if (!isEmailUser.emailVerified) {
     if (await checkIsEmailVerified(email)) {
-      return { message: "Please verify your email" };
+      return {
+        message: "Please verify your email",
+        success: true,
+        details: null,
+      };
     }
     const emailResponse = await checkEmailVerificationAndSendMail(email);
     if (!emailResponse) {
-    throw new AppError("Couldn't send verification mail.Please click on resend mail")
-  }
+      throw new AppError(
+        "Couldn't send verification mail.Please click on resend mail",
+      );
+    }
   }
 
   await new Promise<void>((resolve, reject) => {
@@ -252,23 +264,21 @@ export const userLoginService = async (
   });
 
   return {
-    id: updatedUser.id,
-    name: updatedUser.name,
-    email: updatedUser.email,
-    profilePicture: updatedUser.profilePicture,
-    currentWorkspaceId: updatedUser.currentWorkspaceId,
+    message: "Logged in successfully",
+    details: null,
+    success: true,
   };
 };
 
 export const emailVerificationService = async (token: string, req: Request) => {
-  const isTokenAvailable = await checkEmailVerificationToken(token)
+  const isTokenAvailable = await checkEmailVerificationToken(token);
 
   if (!isTokenAvailable?.token) {
     return { message: "Invalid or Expired Verification Link." };
   }
-  const hasExpired = isTokenAvailable.expires < new Date()
-  if(hasExpired){
-    return { message:"Token expired" }
+  const hasExpired = isTokenAvailable.expires < new Date();
+  if (hasExpired) {
+    return { message: "Token expired" };
   }
 
   const userWithAccount = await prisma.account.update({
@@ -287,7 +297,10 @@ export const emailVerificationService = async (token: string, req: Request) => {
       user: {},
     },
   });
-  await deleteEmailVerificationTokens(isTokenAvailable.token,userWithAccount.providerId);
+  await deleteEmailVerificationTokens(
+    isTokenAvailable.token,
+    userWithAccount.providerId,
+  );
 
   const updatedUser = {
     id: userWithAccount.user.id,

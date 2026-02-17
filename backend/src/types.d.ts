@@ -1,10 +1,15 @@
-import { UserInterface } from "./utils/interfaces"
+import { UserInterface } from "../utils/interfaces";
 
-declare global {
-  namespace Express {
-    interface User extends UserInterface {}
-    interface Request {
-        user?:UserInterface;
-    }
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: UserInterface;
+  }
+}
+
+declare module "express-session" {
+  interface SessionData {
+    passport?: {
+      user?: string;
+    };
   }
 }

@@ -1,11 +1,16 @@
 import { prisma } from "../config/db";
 import { $Enums } from "../generated/prisma";
-import { AuthError, BadRequestError, DataBaseError, NotFoundError } from "../utils/error";
+import {
+  AuthError,
+  BadRequestError,
+  DataBaseError,
+  NotFoundError,
+} from "../utils/error";
 import { genUUid } from "../utils/gen-uuid";
 
 export const createWorkspaceService = async (
   userId: string,
-  data: { name: string; description?: string }
+  data: { name: string; description?: string },
 ) => {
   const user = await prisma.user.findFirst({
     where: { id: userId },
@@ -24,13 +29,13 @@ export const createWorkspaceService = async (
   }
 
   const isExistingWorkspace = await prisma.workspace.findFirst({
-    where:{
-      name:data.name,
-      ownerId:userId
-    }
-  })
-  if(isExistingWorkspace){
-    throw new BadRequestError("Workspace name must be unique")
+    where: {
+      name: data.name,
+      ownerId: userId,
+    },
+  });
+  if (isExistingWorkspace) {
+    throw new BadRequestError("Workspace name must be unique");
   }
 
   const workspace = await prisma.workspace.create({
@@ -77,15 +82,15 @@ export const getUserWorkspacesService = async (userId: string) => {
       userId: userId,
     },
     select: {
-      workspace:{
-        select:{
-          id:true,
-          name:true,
-          description:true,
-          ownerId:true,
-          inviteCode:true
-        }
-      }
+      workspace: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          ownerId: true,
+          inviteCode: true,
+        },
+      },
     },
   });
   if (memberships.length === 0) {
@@ -204,7 +209,7 @@ export const changeMemberRoleService = async (
   userId: string,
   workspaceId: string,
   memberId: string,
-  roleId: $Enums.ProjectRole
+  roleId: $Enums.ProjectRole,
 ) => {
   const workspace = await prisma.workspace.findFirst({
     where: {
@@ -248,9 +253,9 @@ export const changeMemberRoleService = async (
 
 export const updateWorkspaceByIdService = async (
   workspaceId: string,
-  userId:string,
+  userId: string,
   name: string,
-  description?: string
+  description?: string,
 ) => {
   const workspace = await prisma.workspace.findFirst({
     where: {
@@ -262,13 +267,13 @@ export const updateWorkspaceByIdService = async (
   }
 
   const isExistingWorkspace = await prisma.workspace.findFirst({
-    where:{
-      name:name,
-      ownerId:userId
-    }
-  })
-  if(isExistingWorkspace){
-    throw new BadRequestError("Workspace name must be unique")
+    where: {
+      name: name,
+      ownerId: userId,
+    },
+  });
+  if (isExistingWorkspace) {
+    throw new BadRequestError("Workspace name must be unique");
   }
 
   const updatedWorkspace = await prisma.workspace.update({
@@ -282,7 +287,10 @@ export const updateWorkspaceByIdService = async (
   return updatedWorkspace;
 };
 
-export const deleteWorkspaceByIdService = async (workspaceId: string,userId:string) => {
+export const deleteWorkspaceByIdService = async (
+  workspaceId: string,
+  userId: string,
+) => {
   return await prisma.$transaction(async (tx) => {
     const workspace = await tx.workspace.findFirst({
       where: {
@@ -293,47 +301,63 @@ export const deleteWorkspaceByIdService = async (workspaceId: string,userId:stri
       throw new NotFoundError("Workspace not found");
     }
 
-    if(workspace.ownerId.toString()!==userId){
-        throw new AuthError("You are not authorized to perform this operation")
+    if (workspace.ownerId.toString() !== userId) {
+      throw new AuthError("You are not authorized to perform this operation");
     }
 
     const user = await tx.user.findFirst({
-        where:{id:userId}
-    })
-    if(!user){
-        throw new NotFoundError("User not found")
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundError("User not found");
     }
 
     await tx.project.deleteMany({
-        where:{workspaceId:workspaceId}
-    })
+      where: { workspaceId: workspaceId },
+    });
 
     await tx.task.deleteMany({
-        where:{workspaceId:workspaceId}
-    })
+      where: { workspaceId: workspaceId },
+    });
 
     await tx.member.deleteMany({
-        where:{workspaceId:workspaceId}
-    })
+      where: { workspaceId: workspaceId },
+    });
     let currentWorkspace;
-    if(user.currentWorkspaceId === workspaceId){
-        const memberWorkspace = await tx.member.findFirst({
-            where:{
-                userId:userId
-            }
-        })
-        currentWorkspace = await tx.user.update({
-        where:{id:userId},
-        data:{
-            currentWorkspaceId:memberWorkspace?.workspaceId || null
+    if (user.currentWorkspaceId === workspaceId) {
+      const memberWorkspace = await tx.member.findFirst({
+        where: {
+          userId: userId,
         },
-    })
+      });
+      currentWorkspace = await tx.user.update({
+        where: { id: userId },
+        data: {
+          currentWorkspaceId: memberWorkspace?.workspaceId || null,
+        },
+      });
     }
     await tx.workspace.delete({
-        where:{id:workspaceId}
-    })
+      where: { id: workspaceId },
+    });
     return {
-        currentWorkspaceId:currentWorkspace?.currentWorkspaceId
-    }
+      currentWorkspaceId: currentWorkspace?.currentWorkspaceId,
+    };
   });
+};
+
+export const switchCurrentWorkspaceService = async (
+  userId: string,
+  workspaceId: string,
+) => {
+  const membership = await prisma.member.findFirst({
+    where: { userId, workspaceId },
+  });
+  if (!membership) throw new AuthError("Not a member of this workspace");
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { currentWorkspaceId: workspaceId },
+  });
+  return updatedUser;
 };

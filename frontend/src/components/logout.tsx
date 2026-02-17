@@ -1,7 +1,7 @@
 import { LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { logOutMutation } from "@/api/auth";
+import { logOutMutation } from "@/api/api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
