@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "jsx": "react",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */
@@ -111,7 +112,7 @@
   },
   "include": [
     "src/**/*",
-    "src/types.d.ts"    
+    "src/types/index.ts"    
   ],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }

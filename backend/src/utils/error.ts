@@ -1,18 +1,15 @@
 export class AppError extends Error {
   public statusCode: number;
   public details?: any;
-  public success?: boolean;
 
   constructor(
     message = "Internal Server error",
     statusCode = 500,
     details?: any,
-    success?: false,
   ) {
     super(message);
     this.statusCode = statusCode;
     this.details = details;
-    this.success = success;
     Error.captureStackTrace(this);
   }
 }
@@ -35,12 +32,6 @@ export class AuthError extends AppError {
   }
 }
 
-export class UnAuthorizedError extends AppError {
-  constructor(message = "UnAuthorized") {
-    super(message, 401);
-  }
-}
-
 export class ForbiddenError extends AppError {
   constructor(message = "Forbidden") {
     super(message, 403);
@@ -48,25 +39,19 @@ export class ForbiddenError extends AppError {
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = "Resources Not Found") {
+  constructor(message = "Resource Not Found") {
     super(message, 404);
   }
 }
 
 export class RateLimitError extends AppError {
-  constructor(message = "Too Many Requests,please try again later!") {
+  constructor(message = "Too Many Requests") {
     super(message, 429);
   }
 }
 
 export class DataBaseError extends AppError {
-  constructor(message = "DataBase Error", details?: any) {
+  constructor(message = "Database Error", details?: any) {
     super(message, 500, details);
-  }
-}
-
-export class DBUserNotFoundError extends AppError {
-  constructor(message = "User not found in database") {
-    super(message, 404);
   }
 }

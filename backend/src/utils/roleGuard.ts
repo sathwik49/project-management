@@ -1,24 +1,22 @@
 import { $Enums } from "../generated/prisma";
-import { ProjectPermission, ProjectRole, RolePermissions } from "./enums";
-import { UnAuthorizedError } from "./error";
+import { ProjectPermission, RolePermissions } from "./enums";
+import { ForbiddenError } from "./error";
 
 export const roleGuard = (
   role: $Enums.ProjectRole,
-  requiredPermissions: ProjectPermission[]
+  requiredPermissions: ProjectPermission[],
 ): void => {
-  const permissions = RolePermissions[role];
+  const permissions = RolePermissions[role as keyof typeof RolePermissions];
 
   if (!permissions) {
-    throw new UnAuthorizedError(`Invalid role: ${role}`);
+    throw new ForbiddenError("Invalid role");
   }
 
   const hasAllPermissions = requiredPermissions.every((permission) =>
-    permissions.includes(permission)
+    permissions.includes(permission),
   );
 
   if (!hasAllPermissions) {
-    throw new UnAuthorizedError(
-      "You do not have the necessary permissions to perform this task"
-    );
+    throw new ForbiddenError("Permission denied");
   }
 };

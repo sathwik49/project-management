@@ -1,13 +1,40 @@
 import { Router } from "express";
-import { createProjectController, deleteProjectController, getAllProjectsInWorkspaceController, getProjectAnalyticsController, getProjectByIdAndWorkspaceIdController, updateProjectController } from "../controllers/project.controller";
+import {
+  createProjectController,
+  deleteProjectController,
+  getAllProjectsInWorkspaceController,
+  getProjectAnalyticsController,
+  getProjectByIdAndWorkspaceIdController,
+  updateProjectController,
+} from "../controllers/project.controller";
 
-const projectRouter = Router()
+const projectRouter = Router();
 
-projectRouter.post("/workspace/:workspaceId/create",createProjectController)
-projectRouter.get("/workspace/:workspaceId/all",getAllProjectsInWorkspaceController)
-projectRouter.get("/:projectId/workspace/:workspaceId",getProjectByIdAndWorkspaceIdController)
-projectRouter.get("/:projectId/workspace/:workspaceId/analytics",getProjectAnalyticsController)
-projectRouter.put("/:projectId/workspace/:workspaceId/update",updateProjectController)
-projectRouter.delete("/:projectId/workspace/:workspaceId/delete",deleteProjectController)
+projectRouter.post("/workspace/:workspaceId/projects", createProjectController);
 
-export default projectRouter
+projectRouter.get(
+  "/workspace/:workspaceId/projects",
+  getAllProjectsInWorkspaceController,
+);
+
+projectRouter.get(
+  "/workspace/:workspaceId/projects/:projectId",
+  getProjectByIdAndWorkspaceIdController,
+);
+
+projectRouter.get(
+  "/workspace/:workspaceId/projects/:projectId/analytics",
+  getProjectAnalyticsController,
+);
+
+projectRouter.patch(
+  "/workspace/:workspaceId/projects/:projectId",
+  updateProjectController,
+);
+
+projectRouter.delete(
+  "/workspace/:workspaceId/projects/:projectId",
+  deleteProjectController,
+);
+
+export default projectRouter;

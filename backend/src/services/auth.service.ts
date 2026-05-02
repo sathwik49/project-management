@@ -16,33 +16,38 @@ interface Props {
   providerId: string;
   picture?: string;
   email?: string;
-  password?: string;
 }
 
 export const loginOrCreateAccountService = async (data: Props) => {
   const { provider, displayName, providerId, picture, email } = data;
+
+  if (!email) {
+    throw new AppError("Email is required", 400);
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
-  let emailVerified = provider === "GOOGLE" || "GITHUB" ? true : false;
+
+  const emailVerified = provider === "GOOGLE" || provider === "GITHUB";
 
   if (!existingUser) {
-    let user = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
         data: {
           name: displayName,
-          email: email!,
+          email,
           profilePicture: picture,
           lastLogin: new Date(),
         },
       });
 
-      const account = await tx.account.create({
+      await tx.account.create({
         data: {
-          provider: provider,
-          providerId: providerId,
-          emailVerified: emailVerified,
-          userId: user.id,
+          provider,
+          providerId,
+          emailVerified,
+          userId: createdUser.id,
         },
       });
 
@@ -51,58 +56,55 @@ export const loginOrCreateAccountService = async (data: Props) => {
           name: "My Workspace",
           description: "Default Workspace",
           inviteCode: genUUid(),
-          ownerId: user.id,
+          ownerId: createdUser.id,
         },
       });
 
-      const userRole = await tx.role.findFirst({
-        where: {
-          name: "OWNER",
-        },
+      const role = await tx.role.findFirst({
+        where: { name: "OWNER" },
       });
 
-      if (!userRole) {
-        throw new NotFoundError("User Role Not found in DB");
+      if (!role) {
+        throw new NotFoundError("Role not found");
       }
 
-      const member = await tx.member.create({
+      await tx.member.create({
         data: {
-          userId: user.id,
+          userId: createdUser.id,
           workspaceId: workspace.id,
-          roleId: userRole.name,
+          roleId: role.name,
         },
       });
 
       const updatedUser = await tx.user.update({
-        where: {
-          id: user.id,
-        },
+        where: { id: createdUser.id },
         data: {
           currentWorkspaceId: workspace.id,
         },
       });
 
-      const userDetails = {
+      return {
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
-        profilePicture: updatedUser.profilePicture || null,
+        profilePicture: updatedUser.profilePicture,
         currentWorkspaceId: updatedUser.currentWorkspaceId,
       };
-      return userDetails;
     });
+
     return user;
   }
-  //update lastLogin
+
   await prisma.user.update({
-    where: { email: existingUser.email },
+    where: { email },
     data: { lastLogin: new Date() },
   });
+
   return {
     id: existingUser.id,
     email: existingUser.email,
     name: existingUser.name,
-    profilePicture: existingUser.profilePicture || " ",
+    profilePicture: existingUser.profilePicture,
     currentWorkspaceId: existingUser.currentWorkspaceId,
   };
 };
@@ -121,19 +123,21 @@ export const userRegistrationService = async (data: {
   }
 
   const user = await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
+    const createdUser = await tx.user.create({
       data: {
-        name: name,
-        email: email,
+        name,
+        email,
       },
     });
+
     const hashedPassword = await hashValue(password);
-    const account = await tx.account.create({
+
+    await tx.account.create({
       data: {
         provider: "EMAIL",
         providerId: email,
         password: hashedPassword,
-        userId: user.id,
+        userId: createdUser.id,
       },
     });
 
@@ -142,56 +146,43 @@ export const userRegistrationService = async (data: {
         name: "My Workspace",
         description: "Default Workspace",
         inviteCode: genUUid(),
-        ownerId: user.id,
+        ownerId: createdUser.id,
       },
     });
 
-    const userRole = await tx.role.findFirst({
-      where: {
-        name: "OWNER",
-      },
+    const role = await tx.role.findFirst({
+      where: { name: "OWNER" },
     });
 
-    if (!userRole) {
-      throw new NotFoundError("User Role Not found in DB");
+    if (!role) {
+      throw new NotFoundError("Role not found");
     }
 
-    const member = await tx.member.create({
+    await tx.member.create({
       data: {
-        userId: user.id,
+        userId: createdUser.id,
         workspaceId: workspace.id,
-        roleId: userRole.name,
+        roleId: role.name,
       },
     });
 
     const updatedUser = await tx.user.update({
-      where: { id: user.id },
+      where: { id: createdUser.id },
       data: {
         currentWorkspaceId: workspace.id,
       },
     });
-    const userDetails = {
-      id: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      profilePicture: updatedUser.profilePicture || null,
-      currentWorkspaceId: updatedUser.currentWorkspaceId,
-    };
 
-    return userDetails;
+    return updatedUser;
   });
+
   const emailResponse = await checkEmailVerificationAndSendMail(user.email);
 
   if (!emailResponse) {
-    throw new AppError(
-      "Account has been created but couldn't send verification mail.Please click on resend mail",
-    );
+    throw new AppError("Failed to send verification email", 500);
   }
-  return {
-    message: "Verification Link sent",
-    details: null,
-    success: true,
-  };
+
+  return null;
 };
 
 export const userLoginService = async (
@@ -199,53 +190,38 @@ export const userLoginService = async (
   req: Request,
 ) => {
   const { email, password } = data;
-  const user = await prisma.user.findFirst({
+
+  const user = await prisma.user.findUnique({
     where: { email },
   });
 
   if (!user) {
-    //console.log(user)
-    throw new AppError("No user found with this email", 400);
+    throw new AppError("Invalid credentials", 400);
   }
 
-  const isEmailUser = await prisma.account.findFirst({
+  const account = await prisma.account.findFirst({
     where: {
-      AND: {
-        userId: user.id,
-        provider: "EMAIL",
-      },
+      userId: user.id,
+      provider: "EMAIL",
     },
   });
 
-  if (!isEmailUser) {
-    throw new AppError(
-      "Email is registered with Other Providers.Please try through Google/Others",
-      400,
-    );
+  if (!account || !account.password) {
+    throw new AppError("Use social login", 400);
   }
 
-  const isPasswordsMatching = await compareValues(
-    password,
-    isEmailUser.password as string,
-  );
+  const isValid = await compareValues(password, account.password);
 
-  if (!isPasswordsMatching) {
-    throw new AppError("Wrong Password", 400);
+  if (!isValid) {
+    throw new AppError("Invalid credentials", 400);
   }
 
-  if (!isEmailUser.emailVerified) {
-    if (await checkIsEmailVerified(email)) {
-      return {
-        message: "Please verify your email",
-        success: true,
-        details: null,
-      };
-    }
-    const emailResponse = await checkEmailVerificationAndSendMail(email);
-    if (!emailResponse) {
-      throw new AppError(
-        "Couldn't send verification mail.Please click on resend mail",
-      );
+  if (!account.emailVerified) {
+    const verified = await checkIsEmailVerified(email);
+
+    if (!verified) {
+      await checkEmailVerificationAndSendMail(email);
+      throw new AppError("Please verify your email", 400);
     }
   }
 
@@ -256,34 +232,28 @@ export const userLoginService = async (
     });
   });
 
-  const updatedUser = await prisma.user.update({
-    where: { email },
-    data: {
-      lastLogin: new Date(),
-    },
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLogin: new Date() },
   });
 
-  return {
-    message: "Logged in successfully",
-    details: null,
-    success: true,
-  };
+  return null;
 };
 
 export const emailVerificationService = async (token: string, req: Request) => {
-  const isTokenAvailable = await checkEmailVerificationToken(token);
+  const tokenData = await checkEmailVerificationToken(token);
 
-  if (!isTokenAvailable?.token) {
-    return { message: "Invalid or Expired Verification Link." };
+  if (!tokenData || !tokenData.token) {
+    return { message: "Invalid or expired link" };
   }
-  const hasExpired = isTokenAvailable.expires < new Date();
-  if (hasExpired) {
+
+  if (tokenData.expires < new Date()) {
     return { message: "Token expired" };
   }
 
-  const userWithAccount = await prisma.account.update({
+  const account = await prisma.account.update({
     where: {
-      providerId: isTokenAvailable.email,
+      providerId: tokenData.email,
     },
     data: {
       emailVerified: true,
@@ -294,30 +264,26 @@ export const emailVerificationService = async (token: string, req: Request) => {
       },
     },
     include: {
-      user: {},
+      user: true,
     },
   });
-  await deleteEmailVerificationTokens(
-    isTokenAvailable.token,
-    userWithAccount.providerId,
-  );
 
-  const updatedUser = {
-    id: userWithAccount.user.id,
-    name: userWithAccount.user.name,
-    email: userWithAccount.user.email,
-    profilePicture: userWithAccount.user.profilePicture,
-    currentWorkspaceId: userWithAccount.user.currentWorkspaceId,
-  };
-
-  const user = userWithAccount.user;
+  await deleteEmailVerificationTokens(tokenData.token, account.providerId);
 
   await new Promise<void>((resolve, reject) => {
-    req.logIn(user, (err) => {
+    req.logIn(account.user, (err) => {
       if (err) return reject(err);
       resolve();
     });
   });
 
-  return { updatedUser };
+  return {
+    updatedUser: {
+      id: account.user.id,
+      name: account.user.name,
+      email: account.user.email,
+      profilePicture: account.user.profilePicture,
+      currentWorkspaceId: account.user.currentWorkspaceId,
+    },
+  };
 };

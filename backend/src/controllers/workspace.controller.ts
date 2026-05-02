@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import asyncHandler from "../middlewares/asyncHandler";
 import {
   changeMemberRoleService,
@@ -18,32 +18,25 @@ import {
 } from "../validations/workspace.validation";
 import { ZodError } from "zod";
 import { UserInterface } from "../utils/interfaces";
-import {
-  AppError,
-  AuthError,
-  BadRequestError,
-  ValidationError,
-} from "../utils/error";
+import { AuthError, BadRequestError } from "../utils/error";
 import { getMemberRoleInWorkspace } from "../services/member.service";
 import { roleGuard } from "../utils/roleGuard";
 import { ProjectPermission } from "../utils/enums";
 
 export const createWorkspaceController = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const validation = createWorkspaceSchema.safeParse(req.body);
-    if (!validation.success) {
-      console.log(validation.data);
-      throw new ZodError(validation.error.errors);
-    }
+  async (req: Request, res: Response) => {
+    const parsed = createWorkspaceSchema.safeParse(req.body);
+    if (!parsed.success) throw new ZodError(parsed.error.errors);
+
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError("UnAuthorized");
-    }
-    const workspace = await createWorkspaceService(userId, validation.data);
+    if (!userId) throw new AuthError();
+
+    const workspace = await createWorkspaceService(userId, parsed.data);
 
     return res.status(200).json({
-      message: "Workspace created successfully",
-      workspace: workspace,
+      success: true,
+      message: "Workspace created",
+      details: workspace,
     });
   },
 );
@@ -51,16 +44,14 @@ export const createWorkspaceController = asyncHandler(
 export const getUserWorkspacesController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
 
     const workspaces = await getUserWorkspacesService(userId);
 
     return res.status(200).json({
-      message: "Fetched all user workspaces as member",
-      details: workspaces,
       success: true,
+      message: "Workspaces fetched",
+      details: workspaces,
     });
   },
 );
@@ -68,24 +59,20 @@ export const getUserWorkspacesController = asyncHandler(
 export const getWorkspaceByIdController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
+
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      throw new AppError("No Workspace Id provided");
-    }
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
-    //console.log(roleName)
     roleGuard(role, [ProjectPermission.VIEW_ONLY]);
 
-    const membersAndWorkspace = await getWorkspaceByIdService(workspaceId);
+    const data = await getWorkspaceByIdService(workspaceId);
 
     return res.status(200).json({
-      message: "Fetched the workspace with members successfully",
-      details: membersAndWorkspace,
       success: true,
+      message: "Workspace fetched",
+      details: data,
     });
   },
 );
@@ -93,21 +80,20 @@ export const getWorkspaceByIdController = asyncHandler(
 export const getWorkspaceMembersController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
+
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      throw new AppError("No Workspace Id provided");
-    }
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
+
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.VIEW_ONLY]);
+
     const members = await getWorkspaceMembersService(workspaceId);
 
     return res.status(200).json({
-      message: "Workspace members fetched successfully",
-      details: members,
       success: true,
+      message: "Members fetched",
+      details: members,
     });
   },
 );
@@ -115,21 +101,20 @@ export const getWorkspaceMembersController = asyncHandler(
 export const getWorkspaceAnalyticsController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
+
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      return res.status(400).json({ message: "Workspace Id is required" });
-    }
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
+
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.VIEW_ONLY]);
+
     const analytics = await getWorkspaceAnalyticsService(workspaceId);
 
     return res.status(200).json({
-      message: "Workspace Analytics fetched successfully",
-      details: analytics,
       success: true,
+      message: "Analytics fetched",
+      details: analytics,
     });
   },
 );
@@ -137,33 +122,27 @@ export const getWorkspaceAnalyticsController = asyncHandler(
 export const changeWorkspaceMemberRoleController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
+
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      return res.status(400).json({ message: "Workspace Id is required" });
-    }
-    const data = changeMemberRoleSchema.safeParse(req.body);
-    if (!data.success) {
-      throw new ZodError(data.error.errors);
-    }
-    const { memberId, roleId } = data.data;
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
+
+    const parsed = changeMemberRoleSchema.safeParse(req.body);
+    if (!parsed.success) throw new ZodError(parsed.error.errors);
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.CHANGE_MEMBER_ROLE]);
 
     const member = await changeMemberRoleService(
-      userId,
       workspaceId,
-      memberId,
-      roleId,
+      parsed.data.memberId,
+      parsed.data.roleId,
     );
 
     return res.status(200).json({
-      message: "Updated Member role successfully",
-      details: member,
       success: true,
+      message: "Role updated",
+      details: member,
     });
   },
 );
@@ -171,34 +150,27 @@ export const changeWorkspaceMemberRoleController = asyncHandler(
 export const updateWorkspaceByIdController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
 
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      throw new ValidationError("Invalid WorkspaceId");
-    }
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
 
-    const data = updateWorkspaceSchema.safeParse(req.body);
-    if (!data.success) {
-      throw new ZodError(data.error.errors);
-    }
-    const { name, description } = data.data;
+    const parsed = updateWorkspaceSchema.safeParse(req.body);
+    if (!parsed.success) throw new ZodError(parsed.error.errors);
+
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.EDIT_WORKSPACE]);
 
     const workspace = await updateWorkspaceByIdService(
       workspaceId,
       userId,
-      name,
-      description,
+      parsed.data,
     );
 
     return res.status(200).json({
-      message: "Updated workspace successfully",
-      details: workspace,
       success: true,
+      message: "Workspace updated",
+      details: workspace,
     });
   },
 );
@@ -206,24 +178,20 @@ export const updateWorkspaceByIdController = asyncHandler(
 export const deleteWorkspaceByIdController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    if (!userId) {
-      throw new AuthError();
-    }
+    if (!userId) throw new AuthError();
 
     const workspaceId = req.params.id;
-    if (!workspaceId || typeof workspaceId !== "string") {
-      throw new ValidationError("Invalid WorkspaceId");
-    }
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.DELETE_WORKSPACE]);
 
-    const workspace = await deleteWorkspaceByIdService(workspaceId, userId);
+    const result = await deleteWorkspaceByIdService(workspaceId, userId);
 
     return res.status(200).json({
-      message: "Workspace deleted successfully",
-      details: workspace.currentWorkspaceId,
       success: true,
+      message: "Workspace deleted",
+      details: result,
     });
   },
 );
@@ -231,15 +199,16 @@ export const deleteWorkspaceByIdController = asyncHandler(
 export const switchCurrentWorkspaceController = asyncHandler(
   async (req: Request, res: Response) => {
     const { id: userId } = req.user as UserInterface;
-    const { workspaceId } = req.body;
+    if (!userId) throw new AuthError();
 
-    if (!workspaceId) throw new BadRequestError("Workspace ID required");
+    const { workspaceId } = req.body;
+    if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const user = await switchCurrentWorkspaceService(userId, workspaceId);
 
     return res.status(200).json({
       success: true,
-      message: "Current workspace updated",
+      message: "Workspace switched",
       details: user.currentWorkspaceId,
     });
   },

@@ -3,10 +3,10 @@ import { AuthError } from "../utils/error";
 import { UserInterface } from "../utils/interfaces";
 
 const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  const user = req.user as UserInterface;
-  if (!user || !user.id) {
-    throw new AuthError();
+  if (!req.user) {
+    return next(new AuthError("Unauthorized"));
   }
+
   next();
 };
 

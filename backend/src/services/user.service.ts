@@ -2,27 +2,30 @@ import { prisma } from "../config/db";
 import { AuthError } from "../utils/error";
 
 export const getCurrentUserService = async (userId: string) => {
-  const user = await prisma.user.findFirst({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
-    omit: {
-      createdAt: true,
-      updatedAt: true,
-      isActive: true,
-      lastLogin: true,
+
+    select: {
       id: true,
-    },
-    include: {
+      name: true,
+      email: true,
+      profilePicture: true,
+      currentWorkspaceId: true,
+
       currentWorkspace: {
-        omit: {
-          createdAt: true,
-          updatedAt: true,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          inviteCode: true,
+          ownerId: true,
         },
       },
     },
   });
 
   if (!user) {
-    throw new AuthError("UnAuthorized");
+    throw new AuthError("Unauthorized");
   }
 
   return user;

@@ -13,17 +13,20 @@ import {
 
 const workspaceRouter = Router();
 
-workspaceRouter.post("/create/new", createWorkspaceController);
-workspaceRouter.get("/all", getUserWorkspacesController);
-workspaceRouter.get("/:id", getWorkspaceByIdController);
-workspaceRouter.get("/members/:id", getWorkspaceMembersController);
-workspaceRouter.get("/analytics/:id", getWorkspaceAnalyticsController);
-workspaceRouter.put(
-  "/change/member/role/:id",
+workspaceRouter.post("/", createWorkspaceController);
+workspaceRouter.get("/", getUserWorkspacesController);
+workspaceRouter.get("/:workspaceId", getWorkspaceByIdController);
+
+workspaceRouter.get("/:workspaceId/members", getWorkspaceMembersController);
+workspaceRouter.get("/:workspaceId/analytics", getWorkspaceAnalyticsController);
+
+workspaceRouter.patch("/:workspaceId", updateWorkspaceByIdController);
+workspaceRouter.delete("/:workspaceId", deleteWorkspaceByIdController);
+
+workspaceRouter.patch("/switch", switchCurrentWorkspaceController);
+workspaceRouter.patch(
+  "/:workspaceId/member-role",
   changeWorkspaceMemberRoleController,
 );
-workspaceRouter.put("/update/:id", updateWorkspaceByIdController);
-workspaceRouter.delete("/delete/:id", deleteWorkspaceByIdController);
-workspaceRouter.patch("/current-workspace", switchCurrentWorkspaceController);
 
 export default workspaceRouter;

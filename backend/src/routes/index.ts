@@ -7,13 +7,13 @@ import memberRouter from "./member.route";
 import projectRouter from "./project.route";
 import taskRouter from "./task.route";
 
-const mainRouter = Router()
+const mainRouter = Router();
 
-mainRouter.use("/auth",authRouter);
-mainRouter.use("/user",isAuthenticated,userRouter)
-mainRouter.use("/workspace",isAuthenticated,workspaceRouter)
-mainRouter.use("/member",isAuthenticated,memberRouter)
-mainRouter.use("/project",isAuthenticated,projectRouter)
-mainRouter.use("/task",isAuthenticated,taskRouter)
+mainRouter.use("/auth", authRouter);
+mainRouter.use("/user", isAuthenticated, userRouter);
+mainRouter.use("/workspace", isAuthenticated, workspaceRouter);
+mainRouter.use("/member", isAuthenticated, memberRouter);
+mainRouter.use("/project", isAuthenticated, projectRouter);
+mainRouter.use("/task", isAuthenticated, taskRouter);
 
 export default mainRouter;

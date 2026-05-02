@@ -1,62 +1,46 @@
 import { prisma } from "../config/db";
-import { AppError, BadRequestError, NotFoundError } from "../utils/error";
+import { BadRequestError, NotFoundError } from "../utils/error";
 
 export const createProjectService = async (
   workspaceId: string,
   userId: string,
   name: string,
   description?: string,
-  image?: string
+  image?: string,
 ) => {
-  const workspace = await prisma.workspace.findFirst({
-    where: { id: workspaceId },
+  const exists = await prisma.project.findFirst({
+    where: { name, workspaceId },
   });
-  if (!workspace) {
-    throw new NotFoundError("Workspace Not Found.Check WorkspaceId");
-  }
 
-  const isExistingProject = await prisma.project.findFirst({
-    where: {
-      name: name,
-      workspaceId: workspaceId,
-    },
-  });
-  if (isExistingProject) {
-    throw new BadRequestError("Project name must be unique");
-  }
+  if (exists) throw new BadRequestError("Project name must be unique");
 
-  const project = await prisma.project.create({
+  return prisma.project.create({
     data: {
-      name: name,
-      description: description,
-      image: image,
-      workspaceId: workspaceId,
+      name,
+      description,
+      image,
+      workspaceId,
       createdById: userId,
     },
   });
-
-  return project;
 };
 
 export const getAllProjectsInWorkspaceService = async (
   workspaceId: string,
-  userId: string,
   pageSize: number,
-  pageNumber: number
+  pageNumber: number,
 ) => {
   const totalCount = await prisma.project.count({
-    where: {
-      workspaceId: workspaceId,
-    },
+    where: { workspaceId },
   });
+
   const skip = (pageNumber - 1) * pageSize;
+
   const projects = await prisma.project.findMany({
     where: { workspaceId },
-    skip: skip,
-    orderBy: {
-      createdAt: "desc",
-    },
+    skip,
     take: pageSize,
+    orderBy: { createdAt: "desc" },
     include: {
       createdBy: {
         select: {
@@ -68,108 +52,58 @@ export const getAllProjectsInWorkspaceService = async (
     },
   });
 
-  const totalPages = Math.ceil(totalCount / pageSize);
-
-  return { projects, totalCount, totalPages, skip };
+  return {
+    projects,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+  };
 };
 
 export const getProjectByIdAndWorkspaceIdService = async (
   workspaceId: string,
-  projectId: string
+  projectId: string,
 ) => {
-  const workspace = await prisma.workspace.findFirst({
-    where: {
-      id: workspaceId,
-    },
-  });
-  if (!workspace) {
-    throw new NotFoundError("Workspace not found");
-  }
-
   const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      workspaceId,
-    },
-    select: {
-      id: true,
-      name: true,
-      image: true,
-      description: true,
-    },
+    where: { id: projectId, workspaceId },
   });
 
-  if (!project) {
-    throw new NotFoundError(
-      "Project not found or Project doesn't exist in the workspace"
-    );
-  }
+  if (!project) throw new NotFoundError("Project not found");
 
   return project;
 };
 
 export const getProjectAnalyticsService = async (
   workspaceId: string,
-  projectId: string
+  projectId: string,
 ) => {
-  const workspace = await prisma.workspace.findFirst({
-    where: {
-      id: workspaceId,
-    },
-  });
-  if (!workspace) {
-    throw new NotFoundError("Workspace not found");
-  }
-
   const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      workspaceId: workspaceId,
-    },
+    where: { id: projectId, workspaceId },
   });
 
-  if (!project) {
-    throw new NotFoundError(
-      "Project not found or Project doesn't exist in the workspace"
-    );
-  }
+  if (!project) throw new NotFoundError("Project not found");
 
-  const currentDate = new Date();
+  const now = new Date();
 
   const totalTasks = await prisma.task.count({
-    where: {
-      projectId: projectId,
-    },
+    where: { projectId },
   });
 
   const overdueTasks = await prisma.task.count({
     where: {
       projectId,
-      AND: {
-        dueDate: {
-          lt: currentDate,
-        },
-        status: {
-          not: "DONE",
-        },
-      },
+      dueDate: { lt: now },
+      status: { not: "DONE" },
     },
   });
 
   const completedTasks = await prisma.task.count({
     where: {
-      workspaceId,
+      projectId,
       status: "DONE",
     },
   });
 
-  const analytics = {
-    totalTasks,
-    overdueTasks,
-    completedTasks,
-  };
-
-  return analytics;
+  return { totalTasks, overdueTasks, completedTasks };
 };
 
 export const updateProjectService = async (
@@ -177,67 +111,47 @@ export const updateProjectService = async (
   projectId: string,
   name: string,
   description?: string,
-  image?: string
+  image?: string,
 ) => {
   const project = await prisma.project.findFirst({
+    where: { id: projectId, workspaceId },
+  });
+
+  if (!project) throw new NotFoundError("Project not found");
+
+  const exists = await prisma.project.findFirst({
     where: {
-      id: projectId,
-      workspaceId: workspaceId,
+      name,
+      workspaceId,
+      NOT: { id: projectId },
     },
   });
 
-  if (!project) {
-    throw new NotFoundError(
-      "Project not found or Project doesn't exist in the workspace"
-    );
-  }
+  if (exists) throw new BadRequestError("Project name must be unique");
 
-   const isExistingProject = await prisma.project.findFirst({
-    where: {
-      name: name,
-      workspaceId: workspaceId,
-    },
-  });
-  if (isExistingProject) {
-    throw new BadRequestError("Project name must be unique");
-  }
-
-  const updatedProject = await prisma.project.update({
-    where: {
-      id: projectId,
-    },
+  return prisma.project.update({
+    where: { id: projectId },
     data: {
-      name: name,
-      description: description || null,
-      image: image || null,
+      name,
+      description: description ?? null,
+      image: image ?? null,
     },
   });
-
-  return updatedProject;
 };
 
 export const deleteProjectService = async (
   workspaceId: string,
-  projectId: string
+  projectId: string,
 ) => {
   const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      workspaceId: workspaceId,
-    },
+    where: { id: projectId, workspaceId },
   });
 
-  if (!project) {
-    throw new NotFoundError(
-      "Project not found or Project doesn't exist in the workspace"
-    );
-  }
+  if (!project) throw new NotFoundError("Project not found");
 
-  await prisma.task.deleteMany({
-    where:{projectId}
-  })
+  await prisma.task.deleteMany({ where: { projectId } });
 
   await prisma.project.delete({
-    where:{id:projectId}
-  })
+    where: { id: projectId },
+  });
 };

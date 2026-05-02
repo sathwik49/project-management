@@ -1,8 +1,8 @@
-import { Router } from "express"
-import { joinWorkSpaceController } from "../controllers/member.controller"
+import { Router } from "express";
+import { joinWorkSpaceController } from "../controllers/member.controller";
 
-const  memberRouter = Router()
+const memberRouter = Router();
 
-memberRouter.post("/workspace/:inviteCode/join",joinWorkSpaceController)
+memberRouter.post("/join/:inviteCode", joinWorkSpaceController);
 
-export default memberRouter
+export default memberRouter;

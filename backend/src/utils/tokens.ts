@@ -2,7 +2,7 @@ import { prisma } from "../config/db";
 
 export const setUserVerificationToken = async (
   token: string,
-  email: string
+  email: string,
 ) => {
   const expires = new Date(new Date().getTime() + 3600 * 1000);
   await prisma.verification.create({
@@ -21,8 +21,8 @@ export const checkEmailVerificationToken = async (token: string) => {
     },
     select: {
       token: true,
-      expires:true,
-      email:true
+      expires: true,
+      email: true,
     },
   });
   return isTokenAvailable;
@@ -30,9 +30,9 @@ export const checkEmailVerificationToken = async (token: string) => {
 
 export const deleteEmailVerificationTokens = async (
   token: string,
-  email: string
+  email: string,
 ) => {
-  await prisma.verification.delete({
+  await prisma.verification.deleteMany({
     where: {
       token,
       email,

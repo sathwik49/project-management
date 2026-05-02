@@ -17,20 +17,18 @@ authRouter.get(
   "/google",
   passport.authenticate("google", {
     scope: ["email", "profile"],
-  })
+  }),
 );
 
 authRouter.get(
   "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: failureUrl,
-  }),
-  googleLogin
+  passport.authenticate("google", { failureRedirect: failureUrl }),
+  googleLogin,
 );
 
 authRouter.post("/register", userRegistrationController);
 authRouter.post("/login", userLoginController);
-authRouter.post("/verify-email/:id", emailVerificationController);
+authRouter.get("/verify-email/:token", emailVerificationController);
 authRouter.post("/logout", userLogoutController);
 
 export default authRouter;
