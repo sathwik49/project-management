@@ -21,15 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { QUERY_KEYS } from "@/lib/endpoints";
-import {
-  Loader2,
-  Save,
-  AlertCircle,
-  Users,
-  Shield,
-  ArrowLeft,
-  UserCog,
-} from "lucide-react";
+import { Loader2, Save, AlertCircle, Users, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 

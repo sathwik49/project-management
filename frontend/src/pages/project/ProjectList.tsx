@@ -15,7 +15,6 @@ import {
   ChevronRight,
   Search,
   Layout,
-  Loader2,
 } from "lucide-react";
 import { QUERY_KEYS } from "@/lib/endpoints";
 import { Button } from "@/components/ui/button";
