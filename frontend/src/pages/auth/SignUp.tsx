@@ -37,9 +37,9 @@ export default function SignUp() {
   const onSubmit = (data: signUpInputType) => {
     mutate(data, {
       onSuccess() {
-        //toast("Sign up successfull.Redirecting...");
-        navigate("/");
+        toast.success("Please Verify your email.You will be auto logged in afterwards");
         reset();
+        navigate("/sign-in");
       },
       onError(error) {
         // console.log(error);

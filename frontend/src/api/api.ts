@@ -21,6 +21,7 @@ import type {
   getWorkspaceByIdResponseType,
   getWorkspaceMembersResponseType,
   joinWorkspaceResponseType,
+  signInResponseType,
   signUpResponseType,
   TaskPriority,
   TaskStatus,
@@ -29,68 +30,74 @@ import type {
   updateWorkspaceResponseType,
 } from "./types";
 import { api } from "./axios";
+import { ENDPOINTS } from "@/lib/endpoints";
 
 export const signUpMutation = async (
   data: signUpInputType,
 ): Promise<signUpResponseType> => {
-  const res = await api.post("/auth/register", data);
+  const res = await api.post(ENDPOINTS.AUTH.REGISTER, data);
   return res.data;
 };
 
 export const signInMutation = async (
   data: signInInputType,
-): Promise<signUpResponseType> => {
-  const res = await api.post("/auth/login", data);
+): Promise<signInResponseType> => {
+  const res = await api.post(ENDPOINTS.AUTH.LOGIN, data);
   return res.data;
 };
 
 export const getCurrentUser = async (): Promise<getCurrentUserResponseType> => {
-  const res = await api.get("/user/get-user");
+  const res = await api.get(ENDPOINTS.USER.CURRENT);
   return res.data;
 };
 
 export const logOutMutation = async () => {
-  const res = await api.post("/auth/logout");
+  const res = await api.post(ENDPOINTS.AUTH.LOGOUT);
+  return res.data;
+};
+
+export const verifyEmailQuery = async (token: string) => {
+  const res = await api.get(ENDPOINTS.AUTH.VERIFY_EMAIL(token));
   return res.data;
 };
 
 export const getAllUserWorkspaces =
   async (): Promise<getAllUserWorkspacesResponseType> => {
-    const res = await api.get("/workspace/all");
+    const res = await api.get(ENDPOINTS.WORKSPACE.ALL);
     return res.data;
   };
+
 export const switchCurrentWorkspace = async (workspaceId: string) => {
-  const res = await api.patch("/workspace/current-workspace", { workspaceId });
+  const res = await api.patch(ENDPOINTS.WORKSPACE.SWITCH, { workspaceId });
   return res.data;
 };
-
 
 export const createWorkspace = async (data: {
   name: string;
   description?: string;
 }): Promise<createWorkspaceResponseType> => {
-  const res = await api.post("/workspace/create/new", data);
+  const res = await api.post(ENDPOINTS.WORKSPACE.CREATE, data);
   return res.data;
 };
 
 export const getWorkspaceById = async (
   id: string,
 ): Promise<getWorkspaceByIdResponseType> => {
-  const res = await api.get(`/workspace/${id}`);
+  const res = await api.get(ENDPOINTS.WORKSPACE.GET_BY_ID(id));
   return res.data;
 };
 
 export const getWorkspaceMembers = async (
   id: string,
 ): Promise<getWorkspaceMembersResponseType> => {
-  const res = await api.get(`/workspace/members/${id}`);
+  const res = await api.get(ENDPOINTS.WORKSPACE.MEMBERS(id));
   return res.data;
 };
 
 export const getWorkspaceAnalytics = async (
   id: string,
 ): Promise<getWorkspaceAnalyticsResponseType> => {
-  const res = await api.get(`/workspace/analytics/${id}`);
+  const res = await api.get(ENDPOINTS.WORKSPACE.ANALYTICS(id));
   return res.data;
 };
 
@@ -98,54 +105,41 @@ export const updateWorkspace = async (
   id: string,
   data: { name: string; description?: string },
 ): Promise<updateWorkspaceResponseType> => {
-  const res = await api.put(`/workspace/update/${id}`, data);
+  const res = await api.patch(ENDPOINTS.WORKSPACE.UPDATE(id), data);
   return res.data;
 };
 
 export const deleteWorkspace = async (
   id: string,
 ): Promise<deleteWorkspaceResponseType> => {
-  const res = await api.delete(`/workspace/delete/${id}`);
+  const res = await api.delete(ENDPOINTS.WORKSPACE.DELETE(id));
   return res.data;
 };
 
 export const changeWorkspaceMemberRole = async (
   workspaceId: string,
-  data: {
-    memberId: string;
-    roleId: string;
-  },
+  data: { memberId: string; roleId: string },
 ): Promise<changeMemberRoleResponseType> => {
-  const res = await api.put(
-    `/workspace/change/member/role/${workspaceId}`,
+  const res = await api.patch(
+    ENDPOINTS.WORKSPACE.CHANGE_ROLE(workspaceId),
     data,
   );
   return res.data;
 };
 
-
 export const createProject = async (
   workspaceId: string,
-  data: {
-    name: string;
-    description?: string;
-    image?: string;
-  },
+  data: { name: string; description?: string; image?: string },
 ): Promise<createProjectResponseType> => {
-  const res = await api.post(`/project/workspace/${workspaceId}/create`, data);
+  const res = await api.post(ENDPOINTS.PROJECT.CREATE(workspaceId), data);
   return res.data;
 };
 
 export const getProjectsInWorkspace = async (
   workspaceId: string,
-  params?: {
-    pageNumber?: number;
-    pageSize?: number;
-  },
+  params?: { pageNumber?: number; pageSize?: number },
 ): Promise<getProjectsInWorkspaceResponseType> => {
-  const res = await api.get(`/project/workspace/${workspaceId}/all`, {
-    params,
-  });
+  const res = await api.get(ENDPOINTS.PROJECT.ALL(workspaceId), { params });
   return res.data;
 };
 
@@ -153,9 +147,7 @@ export const getProjectById = async (
   workspaceId: string,
   projectId: string,
 ): Promise<getProjectByIdResponseType> => {
-  const res = await api.get(
-    `/project/${projectId}/workspace/${workspaceId}`,
-  );
+  const res = await api.get(ENDPOINTS.PROJECT.GET(workspaceId, projectId));
   return res.data;
 };
 
@@ -164,7 +156,7 @@ export const getProjectAnalytics = async (
   projectId: string,
 ): Promise<getProjectAnalyticsResponseType> => {
   const res = await api.get(
-    `/project/${projectId}/workspace/${workspaceId}/analytics`,
+    ENDPOINTS.PROJECT.ANALYTICS(workspaceId, projectId),
   );
   return res.data;
 };
@@ -172,14 +164,10 @@ export const getProjectAnalytics = async (
 export const updateProject = async (
   workspaceId: string,
   projectId: string,
-  data: {
-    name: string;
-    description?: string;
-    image?: string;
-  },
+  data: { name: string; description?: string; image?: string },
 ): Promise<updateProjectResponseType> => {
-  const res = await api.put(
-    `/project/${projectId}/workspace/${workspaceId}/update`,
+  const res = await api.patch(
+    ENDPOINTS.PROJECT.UPDATE(workspaceId, projectId),
     data,
   );
   return res.data;
@@ -190,11 +178,10 @@ export const deleteProject = async (
   projectId: string,
 ): Promise<deleteProjectResponseType> => {
   const res = await api.delete(
-    `/project/${projectId}/workspace/${workspaceId}/delete`,
+    ENDPOINTS.PROJECT.DELETE(workspaceId, projectId),
   );
   return res.data;
 };
-
 
 type CreateTaskBody = {
   title: string;
@@ -220,7 +207,7 @@ export const createTask = async (
   body: CreateTaskBody,
 ): Promise<createTaskResponseType> => {
   const res = await api.post(
-    `/task/project/${projectId}/workspace/${workspaceId}/create`,
+    ENDPOINTS.TASK.CREATE(workspaceId, projectId),
     body,
   );
   return res.data;
@@ -232,8 +219,8 @@ export const updateTask = async (
   taskId: string,
   body: UpdateTaskBody,
 ): Promise<updateTaskResponseType> => {
-  const res = await api.put(
-    `/task/${taskId}/project/${projectId}/workspace/${workspaceId}/update`,
+  const res = await api.patch(
+    ENDPOINTS.TASK.UPDATE(workspaceId, projectId, taskId),
     body,
   );
   return res.data;
@@ -252,9 +239,7 @@ export const getTasksInWorkspace = async (
     pageSize?: number;
   },
 ): Promise<getTasksInWorkspaceResponseType> => {
-  const res = await api.get(`/task/workspace/${workspaceId}/all/`, {
-    params,
-  });
+  const res = await api.get(ENDPOINTS.TASK.ALL(workspaceId), { params });
   return res.data;
 };
 
@@ -263,9 +248,7 @@ export const getTaskById = async (
   projectId: string,
   taskId: string,
 ): Promise<getTaskByIdResponseType> => {
-  const res = await api.get(
-    `/task/${taskId}/project/${projectId}/workspace/${workspaceId}`,
-  );
+  const res = await api.get(ENDPOINTS.TASK.GET(workspaceId, projectId, taskId));
   return res.data;
 };
 
@@ -273,14 +256,13 @@ export const deleteTask = async (
   workspaceId: string,
   taskId: string,
 ): Promise<deleteTaskResponseType> => {
-  const res = await api.delete(`/task/${taskId}/workspace/${workspaceId}`);
+  const res = await api.delete(ENDPOINTS.TASK.DELETE(workspaceId, taskId));
   return res.data;
 };
-
 
 export const joinWorkspace = async (
   inviteCode: string,
 ): Promise<joinWorkspaceResponseType> => {
-  const res = await api.post(`/member/workspace/${inviteCode}/join`);
+  const res = await api.post(ENDPOINTS.MEMBER.JOIN(inviteCode));
   return res.data;
 };

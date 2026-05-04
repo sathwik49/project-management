@@ -1,19 +1,19 @@
 import { getCurrentUser } from "@/api/api";
+import { QUERY_KEYS } from "@/lib/endpoints";
 import { useQuery } from "@tanstack/react-query";
 
 export const useAuthUser = () => {
-  const {
-    data: user,
+  const { data, isLoading, isError,error } = useQuery({
+    queryKey: QUERY_KEYS.USER.CURRENT,
+    queryFn: getCurrentUser,
+    retry: false,
+    refetchOnMount: false,
+  });
+
+  return {
+    data,
     isLoading,
     isError,
-  } = useQuery({
-    queryKey: ["get-user"],
-    queryFn: getCurrentUser,
-    refetchOnMount: false,
-    staleTime: 10 * 60 * 1000,
-  });
-  if (!user) {
-    return null;
-  }
-  return { user, isLoading, isError };
+    error
+  };
 };

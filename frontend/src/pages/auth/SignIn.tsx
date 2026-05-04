@@ -10,11 +10,12 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { signInMutation } from "../../api/api";
 import { CircleLoader } from "react-spinners";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import type { signInResponseType } from "../../api/types";
 import { baseURL } from "../../api/baseUrl";
+import { AUTH_REDIRECT_URL } from "@/lib/constants";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,11 +35,17 @@ export default function SignIn() {
     mutationFn: signInMutation,
   });
 
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("back");
+
   const onSubmit = (data: signInInputType) => {
     mutate(data, {
       onSuccess() {
         //toast("Signed in successfully.Redirecting...");
-        navigate("/dashboard");
+        const destination = backTo
+          ? decodeURIComponent(backTo)
+          : AUTH_REDIRECT_URL;
+        navigate(destination);
         reset();
       },
       onError(error) {
@@ -125,7 +132,9 @@ export default function SignIn() {
       <p className="text-center text-medium">
         Don't have an account?{" "}
         <Link
-          to={"/sign-up"}
+          to={
+            backTo ? `/sign-up?back=${encodeURIComponent(backTo)}` : "/sign-up"
+          }
           className="hover:underline text-violet-600 cursor-pointer"
         >
           Sign Up

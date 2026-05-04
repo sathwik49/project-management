@@ -1,37 +1,36 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logout from "@/components/logout";
-import type { currentUserType } from "@/api/types";
-import WorkspaceSwitcher from "./WorkspaceSwitcher";
+import WorkspaceSwitcher from "@/components/dashboard/WorkspaceSwitcher";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, LayoutDashboard } from "lucide-react";
+import type { currentUserType } from "@/api/types";
 
-interface DashboardHeaderProps {
+interface AppHeaderProps {
   user: currentUserType;
-  workspace: any;
 }
 
-export default function DashboardHeader({
-  user,
-  workspace,
-}: DashboardHeaderProps) {
+export default function AppHeader({ user }: AppHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const workspace = user.currentWorkspace;
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const showSwitcher =
     location.pathname === "/dashboard" ||
+    location.pathname.includes("/workspaces") ||
     location.pathname.includes("/projects");
 
   return (
-    <header className="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-50">
-      <div className="flex items-center gap-6">
-        <Link to="/" className="text-base font-bold text-violet-600">
+    <header className="bg-white border-b border-zinc-200 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+      <div className="flex items-center gap-2">
+        <Link to="/" className="text-base font-bold text-violet-600 mr-3">
           ProManSys
         </Link>
 
-        <nav className="hidden sm:flex items-center gap-1">
+        <nav className="hidden sm:flex items-center gap-0.5">
           <Link
             to="/dashboard"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -56,23 +55,27 @@ export default function DashboardHeader({
           </Link>
         </nav>
 
-        {showSwitcher &&
-          (workspace ? (
-            <WorkspaceSwitcher
-              currentWorkspaceId={workspace.id}
-              currentWorkspaceName={workspace.name}
-            />
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-zinc-500 hover:text-violet-600 gap-1.5"
-              onClick={() => navigate("/workspaces")}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Select Workspace
-            </Button>
-          ))}
+        {showSwitcher && (
+          <>
+            <div className="w-px h-5 bg-zinc-200 mx-1" />
+            {workspace ? (
+              <WorkspaceSwitcher
+                currentWorkspaceId={workspace.id}
+                currentWorkspaceName={workspace.name}
+              />
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-zinc-500 hover:text-violet-600 gap-1.5"
+                onClick={() => navigate("/workspaces")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Select Workspace
+              </Button>
+            )}
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

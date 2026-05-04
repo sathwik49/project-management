@@ -44,7 +44,6 @@ export type getAllUserWorkspacesResponseType = ApiResponseType<
   userWorkspacesType
 >;
 
-
 export type WorkspaceMemberUser = {
   id: string;
   name: string | null;
@@ -103,13 +102,14 @@ export type changeMemberRoleResponseType = ApiResponseType<
   WorkspaceMember
 >;
 
-
 export type Project = {
   id: string;
+  workspaceId: string;
   name: string;
   description: string | null;
   image: string | null;
-  workspaceId: string;
+  createdAt: Date;
+  updatedAt: Date;
   createdById: string;
 };
 
@@ -123,17 +123,17 @@ export type ProjectWithCreator = Project & {
   createdBy: ProjectCreator;
 };
 
-export type ProjectListDetails = {
-  projects: ProjectWithCreator[];
-  totalCount: number;
-  totalPages: number;
-  skip: number;
-};
-
 export type getProjectsInWorkspaceResponseType = ApiResponseType<
   unknown,
-  ProjectListDetails
->;
+  ProjectWithCreator[]
+> & {
+  pagination?: {
+    totalCount: number;
+    totalPages: number;
+    pageSize: number;
+    pageNumber: number;
+  };
+};
 
 export type createProjectResponseType = ApiResponseType<unknown, Project>;
 
@@ -147,7 +147,6 @@ export type getProjectAnalyticsResponseType = ApiResponseType<
 export type updateProjectResponseType = ApiResponseType<unknown, Project>;
 
 export type deleteProjectResponseType = ApiResponseType<unknown, null>;
-
 
 export type TaskStatus =
   | "TODO"
@@ -176,14 +175,23 @@ export type TaskBase = {
   createdById: string;
   status: TaskStatus;
   priority: TaskPriority;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
-export type TaskWithAssignee = TaskBase & {
+export type TaskCreator = {
+  id: string;
+  name: string | null;
+  profilePicture: string | null;
+};
+
+export type TaskWithDetails = TaskBase & {
   assignedTo: TaskAssignee | null;
+  createdBy: TaskCreator;
 };
 
 export type TaskListDetails = {
-  tasks: TaskWithAssignee[];
+  tasks: TaskWithDetails[];
   pagination: {
     pageSize: number;
     pageNumber: number;
@@ -202,12 +210,8 @@ export type getTasksInWorkspaceResponseType = ApiResponseType<
   TaskListDetails
 >;
 
-export type getTaskByIdResponseType = ApiResponseType<
-  unknown,
-  TaskWithAssignee
->;
+export type getTaskByIdResponseType = ApiResponseType<unknown, TaskWithDetails>;
 
 export type deleteTaskResponseType = ApiResponseType<unknown, null>;
-
 
 export type joinWorkspaceResponseType = ApiResponseType<unknown, unknown>;

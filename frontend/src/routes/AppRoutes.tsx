@@ -8,12 +8,12 @@ import Dashboard from "@/pages/Dashboard";
 import Home from "@/pages/Home";
 import ProtectedPage from "@/pages/ProtectedPage";
 import WorkspaceList from "@/pages/workspace/WorkspaceList";
-import CreateWorkspace from "@/pages/workspace/CreateWorkspace";
 import WorkspaceDetail from "@/pages/workspace/WorkspaceDetail";
+import WorkspaceSettings from "@/components/workspace/WorkspaceSettings";
 import JoinWorkspace from "@/pages/workspace/JoinWorkspace";
 import ProjectList from "@/pages/project/ProjectList";
 import ProjectDetail from "@/pages/project/ProjectDetail";
-import CreateProject from "@/pages/project/CreateProject";
+import ProjectSettings from "@/pages/project/ProjectSettings";
 
 export default function AppRoutes() {
   return (
@@ -27,19 +27,27 @@ export default function AppRoutes() {
       <Route element={<ProtectedPage />}>
         <Route index path="dashboard" element={<Dashboard />} />
         <Route path="workspaces" element={<WorkspaceList />} />
-        <Route path="workspaces/create" element={<CreateWorkspace />} />
         <Route path="workspaces/:workspaceId" element={<WorkspaceDetail />} />
-        <Route path="workspaces/:workspaceId/projects" element={<ProjectList />} />
         <Route
-          path="workspaces/:workspaceId/projects/create"
-          element={<CreateProject />}
+          path="workspaces/:workspaceId/settings"
+          element={<WorkspaceSettings />}
+        />
+
+        <Route
+          path="workspaces/:workspaceId/projects"
+          element={<ProjectList />}
         />
         <Route
           path="workspaces/:workspaceId/projects/:projectId"
           element={<ProjectDetail />}
         />
-        <Route path="workspace/join/:invite" element={<JoinWorkspace />} />
+        <Route
+          path="workspaces/:workspaceId/projects/:projectId/settings"
+          element={<ProjectSettings />}
+        />
       </Route>
+      <Route path="workspace/join/:invite" element={<JoinWorkspace />} />
+      <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

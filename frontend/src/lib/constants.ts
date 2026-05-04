@@ -1,1 +1,1 @@
-export const roles = ["User", "Owner", "Delivery Person"];
+export const AUTH_REDIRECT_URL = "/dashboard";

@@ -1,84 +1,150 @@
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
-import { getProjectAnalytics, getProjectById } from "@/api/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProjectHeader } from "@/components/project/ProjectHeader";
+import { ProjectInsightSidebar } from "@/components/project/ProjectInsightSidebar";
+import { ProjectPagination } from "@/components/project/ProjectPagination";
+import { StatsGrid } from "@/components/project/StatsGrid";
+import { TaskFormModal } from "@/components/task/TaskFormModal";
+import { TaskList } from "@/components/task/TaskList";
+import { useProjectDetail } from "@/hooks/useProjectDetail";
+import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ProjectDetail() {
-  const { workspaceId, projectId } = useParams<{
-    workspaceId: string;
-    projectId: string;
-  }>();
+  const {
+    workspaceId,
+    projectId,
+    navigate,
+    page,
+    setPage,
+    isModalOpen,
+    setIsModalOpen,
+    selectedTask,
+    setSelectedTask,
+    projectQuery,
+    analyticsQuery,
+    tasksQuery,
+    taskMutation,
+    deleteMutation,
+    getErrorMessage,
+    membersQuery,
+  } = useProjectDetail();
 
-  const { data: projectData, isLoading } = useQuery({
-    queryKey: ["project", workspaceId, projectId],
-    queryFn: () => getProjectById(workspaceId as string, projectId as string),
-    enabled: Boolean(workspaceId && projectId),
-  });
+  if (projectQuery.isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 text-violet-600 animate-spin" />
+      </div>
+    );
 
-  const { data: analyticsData } = useQuery({
-    queryKey: ["projectAnalytics", workspaceId, projectId],
-    queryFn: () =>
-      getProjectAnalytics(workspaceId as string, projectId as string),
-    enabled: Boolean(workspaceId && projectId),
-  });
+  if (projectQuery.error)
+    return (
+      <ErrorState
+        message={getErrorMessage(projectQuery.error)}
+        onBack={() => navigate(-1)}
+      />
+    );
 
-  const project = projectData?.details;
-  const analytics = analyticsData?.details;
+  const project = projectQuery.data?.details;
+  const tasks = tasksQuery.data?.details?.tasks || [];
+  const members = membersQuery.data?.details || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto p-6 space-y-6">
-        {isLoading && (
-          <div className="text-gray-700">Loading project...</div>
-        )}
+    <div className="min-h-screen bg-zinc-50/50">
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <ProjectHeader
+          name={project?.name}
+          description={project?.description}
+          onBack={() => navigate(`/workspaces/${workspaceId}/projects`)}
+          onSettings={() =>
+            navigate(
+              `/workspaces/${workspaceId}/projects/${projectId}/settings`,
+            )
+          }
+          onNewTask={() => {
+            setSelectedTask(null);
+            setIsModalOpen(true);
+          }}
+        />
 
-        {!isLoading && project && (
-          <>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {project.name}
-              </h1>
-              <p className="text-sm text-gray-600 max-w-2xl">
-                {project.description || "No description"}
-              </p>
-            </div>
+        <StatsGrid analytics={analyticsQuery.data?.details} />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Total tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-semibold">
-                    {analytics ? analytics.totalTasks : "-"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Overdue tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-semibold text-red-600">
-                    {analytics ? analytics.overdueTasks : "-"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Completed tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-semibold text-emerald-600">
-                    {analytics ? analytics.completedTasks : "-"}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 space-y-4">
+            <TaskList
+              tasks={tasks}
+              isLoading={tasksQuery.isLoading}
+              onEdit={(task: any) => {
+                setSelectedTask(task);
+                setIsModalOpen(true);
+              }}
+              onDelete={(id: string) =>
+                window.confirm("Delete?") && deleteMutation.mutate(id)
+              }
+              isDeleting={deleteMutation.isPending}
+            />
+            <ProjectPagination
+              page={page}
+              total={tasksQuery.data?.details?.pagination?.totalPages}
+              onPageChange={setPage}
+            />
+          </div>
+
+          <ProjectInsightSidebar
+            project={project}
+            analytics={analyticsQuery.data?.details}
+          />
+        </div>
       </main>
+
+      <TaskFormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTask(null);
+        }}
+        initialData={selectedTask}
+        onSubmit={(data: any) => taskMutation.mutate(data)}
+        isLoading={taskMutation.isPending}
+        members={members}
+      />
     </div>
   );
 }
 
+interface ErrorStateProps {
+  message?: string;
+  onBack: () => void;
+}
+
+export const ErrorState = ({ message, onBack }: ErrorStateProps) => (
+  <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-zinc-50/50">
+    <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center mb-4">
+      <AlertTriangle className="h-8 w-8 text-rose-500" />
+    </div>
+
+    <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+      Something went wrong
+    </h2>
+
+    <p className="text-sm text-zinc-500 max-w-xs mt-2 leading-relaxed">
+      {message ||
+        "We couldn't load the project data. Please check your connection or try again."}
+    </p>
+
+    <div className="flex flex-col sm:flex-row gap-3 mt-8">
+      <Button
+        onClick={onBack}
+        variant="outline"
+        className="h-10 border-zinc-200 font-bold text-xs uppercase tracking-widest px-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
+      </Button>
+
+      <Button
+        onClick={() => window.location.reload()}
+        className="h-10 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-widest px-6"
+      >
+        Retry Connection
+      </Button>
+    </div>
+  </div>
+);
