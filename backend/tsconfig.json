@@ -112,7 +112,7 @@
   },
   "include": [
     "src/**/*",
-    "src/types/index.ts"    
+    "src/types/index.ts" , 
   ],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts","src/generated"]
 }
