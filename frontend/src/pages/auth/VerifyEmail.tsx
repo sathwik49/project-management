@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CircleLoader } from "react-spinners";
 import { verifyEmailQuery } from "@/api/api";
+import { AUTH_REDIRECT_URL } from "@/lib/constants";
 
 export default function VerifyEmail() {
   const { token } = useParams<{ token: string }>();
@@ -15,7 +16,10 @@ export default function VerifyEmail() {
     }
 
     verifyEmailQuery(token)
-      .then(() => setStatus("success"))
+      .then(() => {
+        setStatus("success");
+        navigate(AUTH_REDIRECT_URL);
+      })
       .catch(() => setStatus("error"));
   }, [token]);
 
