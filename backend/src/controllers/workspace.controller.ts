@@ -61,7 +61,7 @@ export const getWorkspaceByIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
@@ -82,7 +82,7 @@ export const getWorkspaceMembersController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
@@ -103,7 +103,7 @@ export const getWorkspaceAnalyticsController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
@@ -124,7 +124,7 @@ export const changeWorkspaceMemberRoleController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const parsed = changeMemberRoleSchema.safeParse(req.body);
@@ -152,7 +152,7 @@ export const updateWorkspaceByIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const parsed = updateWorkspaceSchema.safeParse(req.body);
@@ -180,7 +180,7 @@ export const deleteWorkspaceByIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.id;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new BadRequestError("Workspace id required");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);

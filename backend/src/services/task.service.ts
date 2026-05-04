@@ -111,7 +111,7 @@ export const updateTaskService = async (
       title,
       description: description || null,
       dueDate: date,
-      assignedToId: assignedTo,
+      assignedToId: assignedTo ?? task.assignedToId,
       status,
       priority,
     },
@@ -155,6 +155,9 @@ export const getAllTasksInWorkspaceService = async (
         assignedTo: {
           select: { id: true, name: true, profilePicture: true },
         },
+        createdBy: {
+          select: { id: true, name: true, profilePicture: true },
+        },
       },
     }),
     prisma.task.count({ where: query }),
@@ -180,11 +183,10 @@ export const getTaskByIdService = async (
     where: { id: taskId, projectId, workspaceId },
     include: {
       assignedTo: {
-        select: {
-          id: true,
-          name: true,
-          profilePicture: true,
-        },
+        select: { id: true, name: true, profilePicture: true },
+      },
+      createdBy: {
+        select: { id: true, name: true, profilePicture: true },
       },
     },
   });

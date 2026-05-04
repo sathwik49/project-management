@@ -23,7 +23,10 @@ export const createTaskController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { projectId, workspaceId } = req.params;
+    const { projectId, workspaceId } = req.params as {
+      projectId: string;
+      workspaceId: string;
+    };
 
     if (!projectId) throw new ValidationError("Invalid ProjectId");
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
@@ -56,7 +59,11 @@ export const updateTaskController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { projectId, workspaceId, id: taskId } = req.params;
+    const { projectId, workspaceId, taskId } = req.params as {
+      projectId: string;
+      workspaceId: string;
+      taskId: string;
+    };
 
     if (!projectId) throw new ValidationError("Invalid ProjectId");
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
@@ -91,7 +98,7 @@ export const getAllTasksInWorkspaceController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId } = req.params;
+    const { workspaceId } = req.params as { workspaceId: string };
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
 
     const filters = {
@@ -136,7 +143,11 @@ export const getTaskByIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, projectId, id: taskId } = req.params;
+    const { workspaceId, projectId, taskId } = req.params as {
+      workspaceId: string;
+      projectId: string;
+      taskId: string;
+    };
 
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
     if (!projectId) throw new ValidationError("Invalid ProjectId");
@@ -160,7 +171,10 @@ export const deleteTaskByIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, id: taskId } = req.params;
+    const { workspaceId, taskId } = req.params as {
+      workspaceId: string;
+      taskId: string;
+    };
 
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
     if (!taskId) throw new ValidationError("Invalid TaskId");

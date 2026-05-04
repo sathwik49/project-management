@@ -24,7 +24,7 @@ export const createProjectController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.workspaceId;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
 
     const data = createProjectSchema.safeParse(req.body);
@@ -54,7 +54,7 @@ export const getAllProjectsInWorkspaceController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaceId = req.params.workspaceId;
+    const workspaceId = req.params.workspaceId as string;
     if (!workspaceId) throw new ValidationError("Invalid WorkspaceId");
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
@@ -88,7 +88,10 @@ export const getProjectByIdAndWorkspaceIdController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, projectId } = req.params;
+    const { workspaceId, projectId } = req.params as {
+      workspaceId: string;
+      projectId: string;
+    };
     if (!workspaceId || !projectId) {
       throw new ValidationError("Invalid params");
     }
@@ -114,7 +117,10 @@ export const getProjectAnalyticsController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, projectId } = req.params;
+    const { workspaceId, projectId } = req.params as {
+      workspaceId: string;
+      projectId: string;
+    };
     if (!workspaceId || !projectId) {
       throw new ValidationError("Invalid params");
     }
@@ -137,7 +143,10 @@ export const updateProjectController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, projectId } = req.params;
+    const { workspaceId, projectId } = req.params as {
+      workspaceId: string;
+      projectId: string;
+    };
     if (!workspaceId || !projectId) {
       throw new ValidationError("Invalid params");
     }
@@ -169,7 +178,10 @@ export const deleteProjectController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const { workspaceId, projectId } = req.params;
+    const { workspaceId, projectId } = req.params as {
+      workspaceId: string;
+      projectId: string;
+    };
     if (!workspaceId || !projectId) {
       throw new ValidationError("Invalid params");
     }

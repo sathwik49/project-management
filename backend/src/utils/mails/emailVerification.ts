@@ -1,4 +1,4 @@
-import { render } from "@react-email/components";
+import { render } from "@react-email/render";
 import { prisma } from "../../config/db";
 import EmailVerification from "./mail-templates/VerifyEmail";
 import { appConfig } from "../../config/appConfig";
@@ -46,7 +46,9 @@ const checkEmailVerificationAndSendMail = async (email: string) => {
     html: emailHtml,
   });
 
-  if (error) return null;
+  if (error) {
+    throw new AppError("Failed to send verification email", 500);
+  }
 
   await setUserVerificationToken(token, email);
 

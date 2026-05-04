@@ -8,6 +8,7 @@ import {
   userLogoutController,
   userRegistrationController,
 } from "../controllers/auth.controller";
+import { authRateLimiter } from "../middlewares/authRatelimiter";
 
 const authRouter = Router();
 
@@ -15,6 +16,7 @@ const failureUrl = `${appConfig.FRONTEND_GOOGLE_CALLBACK_URL}/?status=failure`;
 
 authRouter.get(
   "/google",
+  authRateLimiter,
   passport.authenticate("google", {
     scope: ["email", "profile"],
   }),
@@ -26,8 +28,8 @@ authRouter.get(
   googleLogin,
 );
 
-authRouter.post("/register", userRegistrationController);
-authRouter.post("/login", userLoginController);
+authRouter.post("/register", authRateLimiter, userRegistrationController);
+authRouter.post("/login", authRateLimiter, userLoginController);
 authRouter.get("/verify-email/:token", emailVerificationController);
 authRouter.post("/logout", userLogoutController);
 

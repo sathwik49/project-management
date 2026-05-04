@@ -19,11 +19,11 @@ workspaceRouter.get("/:workspaceId", getWorkspaceByIdController);
 
 workspaceRouter.get("/:workspaceId/members", getWorkspaceMembersController);
 workspaceRouter.get("/:workspaceId/analytics", getWorkspaceAnalyticsController);
+workspaceRouter.patch("/switch", switchCurrentWorkspaceController);
 
 workspaceRouter.patch("/:workspaceId", updateWorkspaceByIdController);
 workspaceRouter.delete("/:workspaceId", deleteWorkspaceByIdController);
 
-workspaceRouter.patch("/switch", switchCurrentWorkspaceController);
 workspaceRouter.patch(
   "/:workspaceId/member-role",
   changeWorkspaceMemberRoleController,

@@ -1,10 +1,12 @@
-// import Redis from "ioredis";
-// import { appConfig } from "../config/appConfig";
-// import { AppError } from "./error";
+import Redis from "ioredis";
+import { appConfig } from "../config/appConfig";
 
-// const redis = new Redis(appConfig.REDIS_URL);
-// redis.on("error", (err) => {
-//   console.error("[REDIS ERROR]", err.message);
-// });
+export const redisClient = new Redis(appConfig.REDIS_URL, {
+  tls: {
+    servername: appConfig.REDIS_SERVER_NAME,
+  },
+  connectTimeout: 10000,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+});
 
-// export default redis;

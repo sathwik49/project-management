@@ -63,7 +63,7 @@ export const userLoginController = asyncHandler(
 
 export const emailVerificationController = asyncHandler(
   async (req: Request, res: Response) => {
-    const token = req.params["id"];
+    const token = req.params.token;
 
     if (!token || typeof token !== "string") {
       return res.status(400).json({
@@ -83,19 +83,27 @@ export const emailVerificationController = asyncHandler(
       });
     }
 
-    return res.redirect(`${appConfig.FRONTEND_REDIRECT_URL}`);
+    return res.status(200).json({
+      success: true,
+      message: "Email verified",
+      details: result.updatedUser,
+    });
   },
 );
 
 export const userLogoutController = asyncHandler(
   async (req: Request, res: Response) => {
-    req.session.destroy(() => {});
-    res.clearCookie("connect.sid");
-
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-      details: null,
+    req.session.destroy((err) => {
+      res.clearCookie("proman-session", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: appConfig.NODE_ENV === "production",
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+        details: null,
+      });
     });
   },
 );

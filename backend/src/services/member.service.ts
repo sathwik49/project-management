@@ -74,12 +74,14 @@ export const joinWorkSpaceService = async (
       },
     });
 
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentWorkspaceId: workspace.id,
-      },
-    });
+    const user = await tx.user.findUnique({ where: { id: userId } });
+
+    if (!user?.currentWorkspaceId) {
+      await tx.user.update({
+        where: { id: userId },
+        data: { currentWorkspaceId: workspace.id },
+      });
+    }
 
     return {
       workspaceId: workspace.id,

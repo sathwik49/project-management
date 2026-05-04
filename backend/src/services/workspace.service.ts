@@ -36,10 +36,14 @@ export const createWorkspaceService = async (
     },
   });
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { currentWorkspaceId: workspace.id },
-  });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!user?.currentWorkspaceId) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { currentWorkspaceId: workspace.id },
+    });
+  }
 
   return workspace;
 };
@@ -198,7 +202,8 @@ export const deleteWorkspaceByIdService = async (
 
     if (user?.currentWorkspaceId === workspaceId) {
       const other = await tx.member.findFirst({
-        where: { userId },
+        where: { userId, workspaceId: { not: workspaceId } },
+        orderBy: { createdAt: "desc" },
       });
 
       newWorkspaceId = other?.workspaceId || null;
