@@ -11,10 +11,10 @@ export default function DashboardWorkspaces() {
 
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.WORKSPACE.ALL,
-    queryFn: getAllUserWorkspaces,
+    queryFn: () => getAllUserWorkspaces(),
   });
 
-  const workspaces = (data?.details ?? []).slice(0, 3);
+  const workspaces = (data?.details?.workspaces ?? []).slice(0, 3);
 
   return (
     <div className="flex flex-col gap-3">

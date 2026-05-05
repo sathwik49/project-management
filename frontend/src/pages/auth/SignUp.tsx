@@ -9,12 +9,12 @@ import {
 } from "../../validations/auth.validation";
 import { useMutation } from "@tanstack/react-query";
 import { signUpMutation } from "../../api/api";
-import { CircleLoader } from "react-spinners";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import type { signUpResponseType } from "../../api/types";
 import { baseURL } from "../../api/baseUrl";
+import { Loader2 } from "lucide-react";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +37,9 @@ export default function SignUp() {
   const onSubmit = (data: signUpInputType) => {
     mutate(data, {
       onSuccess() {
-        toast.success("Please Verify your email.You will be auto logged in afterwards");
+        toast.success(
+          "Please Verify your email.You will be auto logged in afterwards",
+        );
         reset();
         navigate("/sign-in");
       },
@@ -120,10 +122,10 @@ export default function SignUp() {
         </div>
 
         <button
-          className="w-full px-4 py-2 bg-violet-500 rounded-lg mt-2 text-white cursor-pointer transition duration-200"
+          className="w-full px-4 py-2 bg-violet-500 flex items-center justify-center rounded-lg mt-2 text-white cursor-pointer transition duration-200"
           type="submit"
         >
-          {isPending ? <CircleLoader size={15} /> : "Sign Up"}
+          {isPending ? <Loader2 className="h-5 w-4 animate-spin" /> : "Sign Up"}
         </button>
       </form>
 

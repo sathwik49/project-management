@@ -1,32 +1,100 @@
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectInsightSidebar } from "@/components/project/ProjectInsightSidebar";
-import { ProjectPagination } from "@/components/project/ProjectPagination";
 import { StatsGrid } from "@/components/project/StatsGrid";
 import { TaskFormModal } from "@/components/task/TaskFormModal";
 import { TaskList } from "@/components/task/TaskList";
 import { useProjectDetail } from "@/hooks/useProjectDetail";
-import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import {
+  Loader2,
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { getTasksInWorkspace } from "@/api/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pagination } from "@/components/Pagination";
+import { deleteTask } from "@/api/api";
+import toast from "react-hot-toast";
 
 export default function ProjectDetail() {
   const {
     workspaceId,
     projectId,
     navigate,
-    page,
-    setPage,
     isModalOpen,
     setIsModalOpen,
     selectedTask,
     setSelectedTask,
     projectQuery,
     analyticsQuery,
-    tasksQuery,
     taskMutation,
-    deleteMutation,
     getErrorMessage,
     membersQuery,
   } = useProjectDetail();
+
+  const queryClient = useQueryClient();
+
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+
+  const debouncedSearch = useDebounce(search, 400);
+
+  const tasksQuery = useQuery({
+    queryKey: ["tasks", workspaceId, projectId, page, debouncedSearch],
+    queryFn: () =>
+      getTasksInWorkspace(workspaceId!, {
+        projectId,
+        pageNumber: page,
+        pageSize: 5,
+        search: debouncedSearch,
+      }),
+    enabled: !!projectId,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      setDeletingTaskId(taskId);
+      return deleteTask(workspaceId!, taskId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["tasks", workspaceId, projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-analytics", workspaceId, projectId],
+      });
+      toast.success("Task deleted");
+    },
+    onError: () => toast.error("Failed to delete task"),
+    onSettled: () => setDeletingTaskId(null),
+  });
+
+  const handleDelete = (taskId: string) => {
+    if (deletingTaskId) return;
+    if (window.confirm("Delete?")) {
+      deleteMutation.mutate(taskId);
+    }
+  };
+
+  const handleEdit = (task: any) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
+
+  useEffect(() => {
+    const totalPages = tasksQuery.data?.details?.pagination?.totalPages || 1;
+    if (page > totalPages) setPage(totalPages);
+  }, [tasksQuery.data, page]);
 
   if (projectQuery.isLoading)
     return (
@@ -44,8 +112,8 @@ export default function ProjectDetail() {
     );
 
   const project = projectQuery.data?.details;
-  const tasks = tasksQuery.data?.details?.tasks || [];
   const members = membersQuery.data?.details || [];
+  const tasks = tasksQuery.data?.details?.tasks || [];
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
@@ -69,29 +137,46 @@ export default function ProjectDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-violet-500" />
+                Active Tasks
+              </h2>
+
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={search}
+                  onChange={handleSearchChange}
+                  className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-64"
+                />
+              </div>
+            </div>
+
             <TaskList
               tasks={tasks}
               isLoading={tasksQuery.isLoading}
-              onEdit={(task: any) => {
-                setSelectedTask(task);
-                setIsModalOpen(true);
-              }}
-              onDelete={(id: string) =>
-                window.confirm("Delete?") && deleteMutation.mutate(id)
-              }
-              isDeleting={deleteMutation.isPending}
+              search={search}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              deletingTaskId={deletingTaskId}
             />
-            <ProjectPagination
+            <Pagination
               page={page}
-              total={tasksQuery.data?.details?.pagination?.totalPages}
+              total={tasksQuery.data?.details?.pagination?.totalPages || 0}
               onPageChange={setPage}
+              isLoading={tasksQuery.isLoading}
             />
           </div>
 
-          <ProjectInsightSidebar
-            project={project}
-            analytics={analyticsQuery.data?.details}
-          />
+          <div className="lg:col-span-1">
+            <ProjectInsightSidebar
+              project={project}
+              analytics={analyticsQuery.data?.details}
+            />
+          </div>
         </div>
       </main>
 

@@ -18,7 +18,7 @@ import {
 } from "../validations/workspace.validation";
 import { ZodError } from "zod";
 import { UserInterface } from "../utils/interfaces";
-import { AuthError, BadRequestError } from "../utils/error";
+import { AuthError, BadRequestError, ForbiddenError } from "../utils/error";
 import { getMemberRoleInWorkspace } from "../services/member.service";
 import { roleGuard } from "../utils/roleGuard";
 import { ProjectPermission } from "../utils/enums";
@@ -46,12 +46,16 @@ export const getUserWorkspacesController = asyncHandler(
     const { id: userId } = req.user as UserInterface;
     if (!userId) throw new AuthError();
 
-    const workspaces = await getUserWorkspacesService(userId);
+    const search = req.query.search as string | undefined;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 6;
+
+    const data = await getUserWorkspacesService(userId, search, page, limit);
 
     return res.status(200).json({
       success: true,
       message: "Workspaces fetched",
-      details: workspaces,
+      details: data,
     });
   },
 );
@@ -132,6 +136,15 @@ export const changeWorkspaceMemberRoleController = asyncHandler(
 
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.CHANGE_MEMBER_ROLE]);
+    if (
+      (role === "OWNER" && parsed.data.roleId === "MEMBER") ||
+      parsed.data.roleId === "ADMIN"
+    ) {
+      throw new ForbiddenError("You cannot demote yourself");
+    }
+    if (role === "ADMIN" && parsed.data.roleId === "OWNER") {
+      throw new ForbiddenError("Permission Denied");
+    }
 
     const member = await changeMemberRoleService(
       workspaceId,

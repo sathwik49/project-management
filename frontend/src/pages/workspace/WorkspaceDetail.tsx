@@ -28,13 +28,13 @@ import {
   Check,
   FolderKanban,
   Loader2,
-  ChevronLeft,
   ChevronRight,
   ArrowUpRight,
   Settings,
 } from "lucide-react";
 import { QUERY_KEYS } from "@/lib/endpoints";
 import toast from "react-hot-toast";
+import { Pagination } from "@/components/Pagination";
 
 export default function WorkspaceDetail() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -82,7 +82,6 @@ export default function WorkspaceDetail() {
   const projects = projectsData?.details ?? [];
   const pagination = projectsData?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
-  const hasNextPage = page < totalPages;
 
   const mutation = useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
@@ -330,31 +329,12 @@ export default function WorkspaceDetail() {
                     </div>
                   ))}
 
-                  <div className="flex items-center justify-between px-1 pt-1">
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
-                      Page {page} of {totalPages}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={page === 1}
-                        onClick={() => setPage((p) => p - 1)}
-                        className="h-7 px-2"
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasNextPage}
-                        onClick={() => setPage((p) => p + 1)}
-                        className="h-7 px-2"
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
+                  <Pagination
+                    page={page}
+                    total={totalPages}
+                    onPageChange={setPage}
+                    isLoading={isProjectsLoading}
+                  />
                 </div>
               )}
             </div>

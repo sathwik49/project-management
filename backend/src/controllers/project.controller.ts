@@ -60,6 +60,7 @@ export const getAllProjectsInWorkspaceController = asyncHandler(
     const role = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [ProjectPermission.VIEW_ONLY]);
 
+    const search = req.query.search as string | undefined;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const pageNumber = parseInt(req.query.pageNumber as string) || 1;
 
@@ -67,6 +68,7 @@ export const getAllProjectsInWorkspaceController = asyncHandler(
       workspaceId,
       pageSize,
       pageNumber,
+      search,
     );
 
     return res.status(200).json({

@@ -18,28 +18,36 @@ import {
 } from "lucide-react";
 import { QUERY_KEYS } from "@/lib/endpoints";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/Pagination";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function ProjectList() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const debouncedSearch = useDebounce(search, 400);
 
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.PROJECT.ALL(workspaceId!),
+    queryKey: [...QUERY_KEYS.PROJECT.ALL(workspaceId!), debouncedSearch, page],
     queryFn: () =>
       getProjectsInWorkspace(workspaceId as string, {
-        pageNumber: 1,
-        pageSize: 50,
+        pageNumber: page,
+        pageSize: 8,
+        search: debouncedSearch,
       }),
     enabled: Boolean(workspaceId),
   });
 
-  const projects = data?.details ?? [];
-  const filtered = projects.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const projects = data?.details || [];
+  const totalPages = data?.pagination?.totalPages || 0;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen">
@@ -52,14 +60,13 @@ export default function ProjectList() {
             >
               <ArrowLeft className="h-4 w-4 text-zinc-400 group-hover:text-violet-600" />
             </button>
+
             <div className="flex items-center gap-3">
               <div className="bg-violet-50 p-2 rounded-lg">
                 <FolderKanban className="h-4 w-4 text-violet-600" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-zinc-900 tracking-tight leading-none">
-                  Projects
-                </h1>
+                <h1 className="text-sm font-bold text-zinc-900">Projects</h1>
                 <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider mt-1">
                   Workspace Projects
                 </p>
@@ -69,19 +76,19 @@ export default function ProjectList() {
 
           <div className="flex items-center gap-3">
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-violet-500 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-violet-500" />
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-64 transition-all"
               />
             </div>
 
             <Button
               size="sm"
-              onClick={() => navigate(`/workspaces/${workspaceId}`)} // Navigates back to trigger your existing Create Dialog
+              onClick={() => navigate(`/workspaces/${workspaceId}`)}
               className="bg-violet-600 hover:bg-violet-700 text-white text-xs h-9 px-4 rounded-md shadow-sm gap-1.5 font-semibold"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -101,7 +108,7 @@ export default function ProjectList() {
               />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : projects.length === 0 ? (
           <div className="border border-dashed border-zinc-200 rounded-2xl py-24 text-center bg-white">
             <Layout className="h-10 w-10 text-zinc-200 mx-auto mb-4" />
             <h3 className="text-sm font-bold text-zinc-900">
@@ -114,48 +121,61 @@ export default function ProjectList() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filtered.map((project) => (
-              <Card
-                key={project.id}
-                onClick={() =>
-                  navigate(`/workspaces/${workspaceId}/projects/${project.id}`)
-                }
-                className="group cursor-pointer border-zinc-200 hover:border-violet-400 transition-all hover:shadow-lg hover:shadow-violet-500/5 overflow-hidden flex flex-col"
-              >
-                <CardHeader className="p-5 pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="h-10 w-10 rounded-md bg-violet-50 flex items-center justify-center text-violet-600 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
-                      {project.name.charAt(0).toUpperCase()}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {projects.map((project: any) => (
+                <Card
+                  key={project.id}
+                  onClick={() =>
+                    navigate(
+                      `/workspaces/${workspaceId}/projects/${project.id}`,
+                    )
+                  }
+                  className="group cursor-pointer border-zinc-200 hover:border-violet-400 transition-all hover:shadow-lg hover:shadow-violet-500/5 flex flex-col"
+                >
+                  <CardHeader className="p-5 pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="h-10 w-10 rounded-md bg-violet-50 flex items-center justify-center text-violet-600 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-all">
+                        {project.name.charAt(0).toUpperCase()}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-zinc-300 group-hover:text-violet-500" />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-zinc-300 group-hover:text-violet-500 transition-all" />
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="px-5 py-0 flex-1">
-                  <h3 className="text-sm font-bold text-zinc-900 group-hover:text-violet-700 transition-colors truncate">
-                    {project.name}
-                  </h3>
-                  <p className="text-[12px] text-zinc-500 line-clamp-2 leading-snug mt-1.5 font-medium">
-                    {project.description ||
-                      "No description provided for this project."}
-                  </p>
-                </CardContent>
+                  <CardContent className="px-5 py-0 flex-1">
+                    <h3 className="text-sm font-bold text-zinc-900 group-hover:text-violet-700 truncate">
+                      {project.name}
+                    </h3>
+                    <p className="text-[12px] text-zinc-500 line-clamp-2 mt-1.5">
+                      {project.description ||
+                        "No description provided for this project."}
+                    </p>
+                  </CardContent>
 
-                <CardFooter className="px-5 py-4 bg-zinc-50/50 mt-auto border-t border-zinc-100/50 flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                      Active
+                  <CardFooter className="px-5 py-4 bg-zinc-50 mt-auto border-t flex justify-between items-center">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">
+                        Active
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-violet-600 opacity-0 group-hover:opacity-100 transition-all">
+                      Open Project
                     </span>
-                  </div>
-                  <span className="text-[11px] font-semibold text-violet-600 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                    Open Project
-                  </span>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-8">
+              <Pagination
+                page={page}
+                total={totalPages}
+                onPageChange={setPage}
+                isLoading={isLoading}
+              />
+            </div>
+          </>
         )}
       </main>
     </div>

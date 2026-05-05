@@ -29,15 +29,27 @@ export const getAllProjectsInWorkspaceService = async (
   workspaceId: string,
   pageSize: number,
   pageNumber: number,
+  search?: string,
 ) => {
   const totalCount = await prisma.project.count({
     where: { workspaceId },
   });
 
   const skip = (pageNumber - 1) * pageSize;
+  const where = {
+    workspaceId,
+    ...(search && {
+      AND: {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { description: { contains: search, mode: "insensitive" as const } },
+        ],
+      },
+    }),
+  };
 
   const projects = await prisma.project.findMany({
-    where: { workspaceId },
+    where,
     skip,
     take: pageSize,
     orderBy: { createdAt: "desc" },

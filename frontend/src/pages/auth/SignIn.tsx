@@ -9,13 +9,13 @@ import {
 } from "../../validations/auth.validation";
 import { useMutation } from "@tanstack/react-query";
 import { signInMutation } from "../../api/api";
-import { CircleLoader } from "react-spinners";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import type { signInResponseType } from "../../api/types";
 import { baseURL } from "../../api/baseUrl";
 import { AUTH_REDIRECT_URL } from "@/lib/constants";
+import { Loader2 } from "lucide-react";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -115,10 +115,10 @@ export default function SignIn() {
           Forgot Password?
         </Link>
         <button
-          className="w-full px-4 py-2 bg-violet-500 rounded-lg mt-2 text-white cursor-pointer transition duration-200 hover:shadow"
+          className="w-full px-4 py-2 flex items-center justify-center bg-violet-500 rounded-lg mt-2 text-white cursor-pointer transition duration-200 hover:shadow"
           type="submit"
         >
-          {isPending ? <CircleLoader size={15} /> : "Sign In"}
+          {isPending ? <Loader2 className="h-5 w-4 animate-spin" /> : "Sign In"}
         </button>
       </form>
 

@@ -26,11 +26,11 @@ export default function WorkspaceSwitcher({
 
   const { data, isLoading, isError } = useQuery({
     queryKey: QUERY_KEYS.WORKSPACE.ALL,
-    queryFn: getAllUserWorkspaces,
+    queryFn: () => getAllUserWorkspaces(undefined, undefined, 5),
     staleTime: 5 * 60 * 1000,
   });
 
-  const workspaces = data?.details ?? [];
+  const workspaces = data?.details?.workspaces || [];
 
   const switchMutation = useMutation({
     mutationFn: switchCurrentWorkspace,

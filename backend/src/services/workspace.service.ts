@@ -48,23 +48,52 @@ export const createWorkspaceService = async (
   return workspace;
 };
 
-export const getUserWorkspacesService = async (userId: string) => {
-  const memberships = await prisma.member.findMany({
-    where: { userId },
-    select: {
+export const getUserWorkspacesService = async (
+  userId: string,
+  search?: string,
+  page: number = 1,
+  limit: number = 6,
+) => {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    userId,
+    ...(search && {
       workspace: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          inviteCode: true,
-          ownerId: true,
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { description: { contains: search, mode: "insensitive" as const } },
+        ],
+      },
+    }),
+  };
+
+  const [memberships, total] = await Promise.all([
+    prisma.member.findMany({
+      where,
+      skip,
+      take: limit,
+      select: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            inviteCode: true,
+            ownerId: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.member.count({ where }),
+  ]);
 
-  return memberships.map((m) => m.workspace);
+  return {
+    workspaces: memberships.map((m) => m.workspace),
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 export const getWorkspaceByIdService = async (workspaceId: string) => {

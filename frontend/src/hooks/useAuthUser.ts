@@ -3,17 +3,17 @@ import { QUERY_KEYS } from "@/lib/endpoints";
 import { useQuery } from "@tanstack/react-query";
 
 export const useAuthUser = () => {
-  const { data, isLoading, isError,error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: QUERY_KEYS.USER.CURRENT,
     queryFn: getCurrentUser,
     retry: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   return {
     data,
     isLoading,
     isError,
-    error
+    error,
   };
 };

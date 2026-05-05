@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProject } from "@/api/api";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 export default function CreateProject() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -71,10 +72,14 @@ export default function CreateProject() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-violet-600 hover:bg-violet-700"
+              className="w-full bg-violet-600 hover:bg-violet-700 flex items-center justify-center"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? "Creating..." : "Create project"}
+              {mutation.isPending ? (
+                <Loader2 className="h-4 w-4  animate-spin" />
+              ) : (
+                "Create project"
+              )}
             </Button>
           </form>
         </div>
@@ -82,4 +87,3 @@ export default function CreateProject() {
     </div>
   );
 }
-

@@ -61,11 +61,18 @@ export const verifyEmailQuery = async (token: string) => {
   return res.data;
 };
 
-export const getAllUserWorkspaces =
-  async (): Promise<getAllUserWorkspacesResponseType> => {
-    const res = await api.get(ENDPOINTS.WORKSPACE.ALL);
-    return res.data;
-  };
+export const getAllUserWorkspaces = async (
+  search?: string,
+  page: number = 1,
+  limit: number = 8,
+): Promise<getAllUserWorkspacesResponseType> => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  params.append("page", String(page));
+  params.append("limit", String(limit));
+  const res = await api.get(`${ENDPOINTS.WORKSPACE.ALL}?${params.toString()}`);
+  return res.data;
+};
 
 export const switchCurrentWorkspace = async (workspaceId: string) => {
   const res = await api.patch(ENDPOINTS.WORKSPACE.SWITCH, { workspaceId });
@@ -137,7 +144,7 @@ export const createProject = async (
 
 export const getProjectsInWorkspace = async (
   workspaceId: string,
-  params?: { pageNumber?: number; pageSize?: number },
+  params?: { pageNumber?: number; pageSize?: number; search?: string },
 ): Promise<getProjectsInWorkspaceResponseType> => {
   const res = await api.get(ENDPOINTS.PROJECT.ALL(workspaceId), { params });
   return res.data;
@@ -237,6 +244,7 @@ export const getTasksInWorkspace = async (
     dueDate?: string;
     pageNumber?: number;
     pageSize?: number;
+    search?: string;
   },
 ): Promise<getTasksInWorkspaceResponseType> => {
   const res = await api.get(ENDPOINTS.TASK.ALL(workspaceId), { params });

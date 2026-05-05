@@ -37,7 +37,12 @@ export type Workspace = {
   ownerId: string;
 };
 
-export type userWorkspacesType = Array<Workspace>;
+export type userWorkspacesType = {
+  workspaces: Array<Workspace>;
+  total: number;
+  page: number;
+  totalPages: number;
+};
 
 export type getAllUserWorkspacesResponseType = ApiResponseType<
   unknown,

@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { logOutMutation } from "@/api/api";
@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 export default function Logout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logOutMutation,
     onSuccess: () => {
@@ -30,8 +30,14 @@ export default function Logout() {
       className="text-gray-700 hover:text-violet-700 flex items-center cursor-pointer"
       onClick={handleLogout}
     >
-      <LogOut className="h-4 w-4" />
-      Logout
+      {isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <>
+          <LogOut className="h-4 w-4" />
+          Logout
+        </>
+      )}
     </Button>
   );
 }

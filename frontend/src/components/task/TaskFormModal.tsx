@@ -21,6 +21,7 @@ import {
   createTaskSchema,
   updateTaskSchema,
 } from "@/validations/task.validation";
+import { Loader2 } from "lucide-react";
 
 export const TaskFormModal = ({
   isOpen,
@@ -211,13 +212,15 @@ export const TaskFormModal = ({
 
           <Button
             disabled={isLoading}
-            className="w-full bg-violet-600 hover:bg-violet-700 font-bold text-xs h-9 mt-2"
+            className="w-full bg-violet-600 hover:bg-violet-700 font-bold text-xs h-9 mt-2 flex items-center justify-center"
           >
-            {isLoading
-              ? "Saving..."
-              : mode === "edit"
-                ? "Update Task"
-                : "Create Task"}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : mode === "edit" ? (
+              "Update Task"
+            ) : (
+              "Create Task"
+            )}
           </Button>
         </form>
       </DialogContent>

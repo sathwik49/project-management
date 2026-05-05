@@ -276,7 +276,11 @@ export const emailVerificationService = async (token: string, req: Request) => {
   await new Promise<void>((resolve, reject) => {
     req.logIn(account.user, (err) => {
       if (err) return reject(err);
-      resolve();
+
+      req.session.save((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
     });
   });
 

@@ -14,6 +14,13 @@ import asyncHandler from "../middlewares/asyncHandler";
 import { ZodError } from "zod";
 
 export const googleLogin = async (req: Request, res: Response) => {
+  await new Promise((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) return reject(err);
+      resolve(null);
+    });
+  });
+
   const { currentWorkspaceId } = req.user as UserInterface;
 
   if (!currentWorkspaceId) {

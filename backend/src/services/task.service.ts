@@ -122,6 +122,7 @@ export const getAllTasksInWorkspaceService = async (
   workspaceId: string,
   filters: any,
   pagination: { pageNumber: number; pageSize: number },
+  search?: string,
 ) => {
   const workspace = await prisma.workspace.findFirst({
     where: { id: workspaceId },
@@ -140,6 +141,12 @@ export const getAllTasksInWorkspaceService = async (
     }),
     ...(filters.dueDate && {
       dueDate: { equals: new Date(filters.dueDate) },
+    }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: "insensitive" as const } },
+        { description: { contains: search, mode: "insensitive" as const } },
+      ],
     }),
   };
 
@@ -169,7 +176,6 @@ export const getAllTasksInWorkspaceService = async (
       ...pagination,
       totalCount,
       totalPages: Math.ceil(totalCount / pagination.pageSize),
-      skip,
     },
   };
 };
