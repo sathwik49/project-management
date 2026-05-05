@@ -226,9 +226,25 @@ export const userLoginService = async (
   }
 
   await new Promise<void>((resolve, reject) => {
+    console.log("Before login:");
+    console.log("secure:", req.secure);
+    console.log("protocol:", req.protocol);
+    console.log("sessionID (before):", req.sessionID);
+
     req.logIn(user, (err) => {
       if (err) return reject(err);
-      resolve();
+
+      console.log("After req.logIn:");
+      console.log("session:", req.session);
+
+      req.session.save((err) => {
+        if (err) return reject(err);
+
+        console.log("After session.save:");
+        console.log("sessionID (after):", req.sessionID);
+
+        resolve();
+      });
     });
   });
 
