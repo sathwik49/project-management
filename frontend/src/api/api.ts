@@ -243,7 +243,7 @@ export const getTasksInWorkspace = async (
     status?: string[];
     priority?: string[];
   },
-) => {
+): Promise<getTasksInWorkspaceResponseType> => {
   const query = new URLSearchParams();
   if (params.projectId) query.append("projectId", params.projectId);
   if (params.pageNumber) query.append("pageNumber", String(params.pageNumber));

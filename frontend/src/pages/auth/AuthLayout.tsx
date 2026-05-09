@@ -1,6 +1,6 @@
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { AUTH_REDIRECT_URL } from "@/lib/constants";
-import { ArrowLeftCircle } from "lucide-react";
+import { ArrowLeftCircle, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 
@@ -15,7 +15,12 @@ export default function AuthLayout() {
     }
   }, [isLoading, user, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-violet-50/60">
+        <Loader2 className="h-6 w-6 text-violet-600 animate-spin" />
+      </div>
+    );
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-violet-50/60 px-4 sm:px-6 lg:px-8">
