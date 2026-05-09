@@ -19,6 +19,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pagination } from "@/components/Pagination";
 import { deleteTask } from "@/api/api";
 import toast from "react-hot-toast";
+import {
+  TaskFilters,
+  type TaskFiltersType,
+} from "@/components/task/TaskFilters";
 
 export default function ProjectDetail() {
   const {
@@ -41,17 +45,33 @@ export default function ProjectDetail() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
-
   const debouncedSearch = useDebounce(search, 400);
 
+  const [filters, setFilters] = useState<TaskFiltersType>({
+    status: [],
+    priority: [],
+  });
+
+  const handleClearFilters = () => {
+    setFilters({ status: [], priority: [] });
+    setPage(1);
+  };
+
+  const handleFiltersChange = (f: TaskFiltersType) => {
+    setFilters(f);
+    setPage(1);
+  };
+
   const tasksQuery = useQuery({
-    queryKey: ["tasks", workspaceId, projectId, page, debouncedSearch],
+    queryKey: ["tasks", workspaceId, projectId, page, debouncedSearch, filters],
     queryFn: () =>
       getTasksInWorkspace(workspaceId!, {
         projectId,
         pageNumber: page,
         pageSize: 5,
         search: debouncedSearch,
+        status: filters.status,
+        priority: filters.priority,
       }),
     enabled: !!projectId,
   });
@@ -117,7 +137,7 @@ export default function ProjectDetail() {
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <ProjectHeader
           name={project?.name}
           description={project?.description}
@@ -137,20 +157,27 @@ export default function ProjectDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between px-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between px-1 gap-2">
               <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-violet-500" />
                 Active Tasks
               </h2>
 
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={search}
-                  onChange={handleSearchChange}
-                  className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-64"
+              <div className="flex items-center gap-2">
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={handleSearchChange}
+                    className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-40 sm:w-56"
+                  />
+                </div>
+                <TaskFilters
+                  filters={filters}
+                  onChange={handleFiltersChange}
+                  onClear={handleClearFilters}
                 />
               </div>
             </div>

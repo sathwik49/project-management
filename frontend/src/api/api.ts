@@ -235,19 +235,26 @@ export const updateTask = async (
 
 export const getTasksInWorkspace = async (
   workspaceId: string,
-  params?: {
+  params: {
     projectId?: string;
-    status?: TaskStatus[];
-    priority?: TaskPriority[];
-    assignedTo?: string[];
-    keyword?: string;
-    dueDate?: string;
     pageNumber?: number;
     pageSize?: number;
     search?: string;
+    status?: string[];
+    priority?: string[];
   },
-): Promise<getTasksInWorkspaceResponseType> => {
-  const res = await api.get(ENDPOINTS.TASK.ALL(workspaceId), { params });
+) => {
+  const query = new URLSearchParams();
+  if (params.projectId) query.append("projectId", params.projectId);
+  if (params.pageNumber) query.append("pageNumber", String(params.pageNumber));
+  if (params.pageSize) query.append("pageSize", String(params.pageSize));
+  if (params.search) query.append("search", params.search);
+  params.status?.forEach((s) => query.append("status", s));
+  params.priority?.forEach((p) => query.append("priority", p));
+
+  const res = await api.get(
+    `${ENDPOINTS.TASK.ALL(workspaceId)}?${query.toString()}`,
+  );
   return res.data;
 };
 

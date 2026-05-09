@@ -27,7 +27,7 @@ export default function Features() {
           What you can do with ProManSys
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {featureList.map((item, index) => (
             <Card
               key={index}

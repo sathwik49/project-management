@@ -104,16 +104,15 @@ export const getAllTasksInWorkspaceController = asyncHandler(
     const filters = {
       projectId: req.query.projectId as string | undefined,
       status: req.query.status
-        ? (req.query.status as string).split(",")
+        ? Array.isArray(req.query.status)
+          ? req.query.status
+          : [req.query.status]
         : undefined,
       priority: req.query.priority
-        ? (req.query.priority as string).split(",")
+        ? Array.isArray(req.query.priority)
+          ? req.query.priority
+          : [req.query.priority]
         : undefined,
-      assignedTo: req.query.assignedTo
-        ? (req.query.assignedTo as string).split(",")
-        : undefined,
-      keyword: req.query.keyword as string | undefined,
-      dueDate: req.query.dueDate as string | undefined,
     };
 
     const pagination = {

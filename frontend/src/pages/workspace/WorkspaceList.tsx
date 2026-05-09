@@ -99,7 +99,7 @@ export default function WorkspaceList() {
   return (
     <div className="min-h-screen">
       <div className="border-b border-zinc-100 bg-white shadow-xs">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-16 flex flex-wrap items-center justify-between gap-2 py-3">
           <div className="flex items-center gap-3">
             <div className="bg-violet-50 p-2 rounded-lg">
               <Layers className="h-4 w-4 text-violet-600" />
@@ -122,7 +122,7 @@ export default function WorkspaceList() {
                 placeholder="Search workspaces..."
                 value={search}
                 onChange={handleSearchChange}
-                className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-64 transition-all"
+                className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 focus:bg-white outline-none w-40 sm:w-64 transition-all"
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function WorkspaceList() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (

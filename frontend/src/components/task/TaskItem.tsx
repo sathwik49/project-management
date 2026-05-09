@@ -23,9 +23,9 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
   return (
     <div
       onClick={() => onEdit(task)}
-      className="bg-white border border-zinc-200 rounded-lg p-3 flex items-center justify-between hover:border-violet-200 transition-colors shadow-sm cursor-pointer group"
+      className="bg-white border border-zinc-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between hover:border-violet-200 transition-colors shadow-sm cursor-pointer group gap-2"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div
           className={`h-2 w-2 rounded-full ${task.status === "DONE" ? "bg-emerald-500" : "bg-amber-500"}`}
         />
@@ -55,7 +55,7 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
           {task.priority}
         </Badge>
         <Badge
-          className={`text-[9px] font-bold uppercase py-0 px-2 h-5 border-none ${statusColors[task.status]}`}
+          className={`text-[9px] font-bold uppercase py-0 px-2 h-5 border-none hidden sm:inline-flex ${statusColors[task.status]}`}
         >
           {task.status.replace("_", " ")}
         </Badge>

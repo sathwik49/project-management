@@ -54,8 +54,8 @@ export const TaskCard = ({
       </span>
     </div>
 
-    <div className="flex items-center justify-between pt-3 border-t border-zinc-50">
-      <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-400 uppercase">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-50 gap-2">
+      <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-zinc-400 uppercase">
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           <span className="">Due Date:</span>
