@@ -50,10 +50,21 @@ export default function ProjectDetail() {
   const [filters, setFilters] = useState<TaskFiltersType>({
     status: [],
     priority: [],
+    dueDate: undefined,
+    createdAt: undefined,
+    assignedTo: undefined,
+    createdBy: undefined,
   });
 
   const handleClearFilters = () => {
-    setFilters({ status: [], priority: [] });
+    setFilters({
+      status: [],
+      priority: [],
+      dueDate: undefined,
+      createdAt: undefined,
+      assignedTo: undefined,
+      createdBy: undefined,
+    });
     setPage(1);
   };
 
@@ -72,6 +83,10 @@ export default function ProjectDetail() {
         search: debouncedSearch,
         status: filters.status,
         priority: filters.priority,
+        dueDate: filters.dueDate,
+        createdAt: filters.createdAt,
+        assignedTo: filters.assignedTo,
+        createdBy: filters.createdBy,
       }),
     enabled: !!projectId,
   });
@@ -178,6 +193,7 @@ export default function ProjectDetail() {
                   filters={filters}
                   onChange={handleFiltersChange}
                   onClear={handleClearFilters}
+                  members={members}
                 />
               </div>
             </div>

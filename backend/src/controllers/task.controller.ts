@@ -103,6 +103,11 @@ export const getAllTasksInWorkspaceController = asyncHandler(
 
     const filters = {
       projectId: req.query.projectId as string | undefined,
+      keyword: req.query.keyword as string | undefined,
+      dueDate: req.query.dueDate as string | undefined,
+      createdAt: req.query.createdAt as string | undefined,
+      assignedTo: req.query.assignedTo as string | undefined,
+      createdBy: req.query.createdBy as string | undefined,
       status: req.query.status
         ? Array.isArray(req.query.status)
           ? req.query.status

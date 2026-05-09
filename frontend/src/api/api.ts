@@ -242,6 +242,10 @@ export const getTasksInWorkspace = async (
     search?: string;
     status?: string[];
     priority?: string[];
+    dueDate?: string;
+    createdAt?: string;
+    assignedTo?: string;
+    createdBy?: string;
   },
 ): Promise<getTasksInWorkspaceResponseType> => {
   const query = new URLSearchParams();
@@ -249,6 +253,10 @@ export const getTasksInWorkspace = async (
   if (params.pageNumber) query.append("pageNumber", String(params.pageNumber));
   if (params.pageSize) query.append("pageSize", String(params.pageSize));
   if (params.search) query.append("search", params.search);
+  if (params.dueDate) query.append("dueDate", params.dueDate);
+  if (params.createdAt) query.append("createdAt", params.createdAt);
+  if (params.assignedTo) query.append("assignedTo", params.assignedTo);
+  if (params.createdBy) query.append("createdBy", params.createdBy);
   params.status?.forEach((s) => query.append("status", s));
   params.priority?.forEach((p) => query.append("priority", p));
 

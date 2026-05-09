@@ -222,13 +222,13 @@ Validation errors:
 
 | Permission         | OWNER | ADMIN | MEMBER |
 | ------------------ | ----- | ----- | ------ |
-| View workspace     | ✅    | ✅    | ✅     |
-| Edit workspace     | ✅    | ✅    | ❌     |
-| Delete workspace   | ✅    | ❌    | ❌     |
-| Create project     | ✅    | ✅    | ❌     |
-| Edit project       | ✅    | ✅    | ❌     |
-| Delete project     | ✅    | ✅    | ❌     |
-| Create task        | ✅    | ✅    | ✅     |
-| Edit task          | ✅    | ✅    | ✅     |
-| Delete task        | ✅    | ✅    | ❌     |
-| Change member role | ✅    | ❌    | ❌     |
+| View workspace     | yes   | yes   | yes    |
+| Edit workspace     | yes   | yes   | no     |
+| Delete workspace   | yes   | no    | no     |
+| Create project     | yes   | yes   | no     |
+| Edit project       | yes   | yes   | no     |
+| Delete project     | yes   | yes   | no     |
+| Create task        | yes   | yes   | yes    |
+| Edit task          | yes   | yes   | yes    |
+| Delete task        | yes   | yes   | no     |
+| Change member role | yes   | yes   | no     |

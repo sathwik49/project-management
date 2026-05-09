@@ -135,7 +135,6 @@ export const getAllTasksInWorkspaceService = async (
     ...(filters.projectId && { projectId: filters.projectId }),
     ...(filters.status && { status: { in: filters.status } }),
     ...(filters.priority && { priority: { in: filters.priority } }),
-    ...(filters.assignedTo && { assignedToId: { in: filters.assignedTo } }),
     ...(filters.keyword && {
       title: { contains: filters.keyword, mode: "insensitive" },
     }),
@@ -147,6 +146,14 @@ export const getAllTasksInWorkspaceService = async (
         { title: { contains: search, mode: "insensitive" as const } },
         { description: { contains: search, mode: "insensitive" as const } },
       ],
+    }),
+    ...(filters.assignedTo && { assignedToId: filters.assignedTo }),
+    ...(filters.createdBy && { createdById: filters.createdBy }),
+    ...(filters.createdAt && {
+      createdAt: {
+        gte: new Date(filters.createdAt),
+        lt: new Date(new Date(filters.createdAt).getTime() + 86400000),
+      },
     }),
   };
 
