@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { appConfig } from "../config/appConfig";
 import { UserInterface } from "../utils/interfaces";
 import {
@@ -7,38 +7,87 @@ import {
 } from "../validations/auth.validation";
 import {
   emailVerificationService,
+  loginOrCreateAccountService,
   userLoginService,
   userRegistrationService,
 } from "../services/auth.service";
 import asyncHandler from "../middlewares/asyncHandler";
 import { ZodError } from "zod";
 
-export const googleLogin = async (req: Request, res: Response) => {
-  await new Promise((resolve, reject) => {
-    req.session.save((err) => {
-      if (err) return reject(err);
-      resolve(null);
-    });
-  });
+export const googleTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { access_token } = req.body;
 
-  const { currentWorkspaceId } = req.user as UserInterface;
+    if (!access_token) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Token required", details: null });
+    }
 
-  if (!currentWorkspaceId) {
-    return res.redirect(
-      `${appConfig.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`,
+    console.log("Fetching Google profile...");
+
+    const googleRes = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: { Authorization: `Bearer ${access_token}` },
+      },
     );
-  }
 
-  return res.redirect(`${appConfig.FRONTEND_REDIRECT_URL}`);
+    console.log("Google response status:", googleRes.status);
+
+    if (!googleRes.ok) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "Invalid Google token",
+          details: null,
+        });
+    }
+
+    const profile = await googleRes.json();
+    console.log("Profile:", profile);
+
+    const user = await loginOrCreateAccountService({
+      provider: "GOOGLE",
+      displayName: profile.name,
+      providerId: profile.sub,
+      picture: profile.picture,
+      email: profile.email,
+    });
+
+    console.log("User:", user.id);
+
+    (req.session as any).userId = user.id;
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => (err ? reject(err) : resolve()));
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged in successfully",
+      details: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        currentWorkspaceId: user.currentWorkspaceId,
+      },
+    });
+  } catch (error) {
+    console.error("googleTokenController error:", error);
+    next(error);
+  }
 };
 
 export const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
     const validation = userRegistrationSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      throw new ZodError(validation.error.errors);
-    }
+    if (!validation.success) throw new ZodError(validation.error.errors);
 
     await userRegistrationService(req.body);
 
@@ -53,10 +102,7 @@ export const userRegistrationController = asyncHandler(
 export const userLoginController = asyncHandler(
   async (req: Request, res: Response) => {
     const validation = userLoginSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      throw new ZodError(validation.error.errors);
-    }
+    if (!validation.success) throw new ZodError(validation.error.errors);
 
     await userLoginService(req.body, req);
 
@@ -71,7 +117,6 @@ export const userLoginController = asyncHandler(
 export const emailVerificationController = asyncHandler(
   async (req: Request, res: Response) => {
     const token = req.params.token;
-
     if (!token || typeof token !== "string") {
       return res.status(400).json({
         success: false,
@@ -83,11 +128,9 @@ export const emailVerificationController = asyncHandler(
     const result = await emailVerificationService(token, req);
 
     if (result.message) {
-      return res.status(400).json({
-        success: false,
-        message: result.message,
-        details: null,
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: result.message, details: null });
     }
 
     return res.status(200).json({

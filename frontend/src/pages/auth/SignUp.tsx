@@ -13,8 +13,10 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import type { signUpResponseType } from "../../api/types";
-import { baseURL } from "../../api/baseUrl";
 import { Loader2 } from "lucide-react";
+import { useGoogleLogin } from "@react-oauth/google";
+import { AUTH_REDIRECT_URL } from "@/lib/constants";
+import { googleTokenMutation } from "../../api/api";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,9 +56,19 @@ export default function SignUp() {
       },
     });
   };
-  const handleGoogleSignIn = () => {
-    window.location.href = `${baseURL}/auth/google`;
-  };
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse: any) => {
+      try {
+        await googleTokenMutation(tokenResponse.access_token);
+        navigate(AUTH_REDIRECT_URL);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.message ?? "Google sign in failed");
+        }
+      }
+    },
+    onError: () => toast.error("Google sign in failed"),
+  });
   return (
     <div className="bg-white w-full max-w-md p-8 rounded-lg flex flex-col space-y-2 shadow-xl">
       <Link to={"/"} className="text-center mb-3">
@@ -131,10 +143,10 @@ export default function SignUp() {
 
       <button
         className="w-full px-4 py-2 rounded-lg mt-2 cursor-pointer flex justify-center items-center gap-3 border hover:bg-gray-200 hover:text-black"
-        onClick={handleGoogleSignIn}
+        onClick={() => googleLogin()}
       >
         <FcGoogle size={19} />
-        <span className="">Sign Up with Google</span>
+        <span>Sign In with Google</span>
       </button>
       <p className="text-center text-medium">
         Already have an account?{" "}

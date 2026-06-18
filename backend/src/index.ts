@@ -3,18 +3,17 @@ import "dotenv/config";
 import cors from "cors";
 import { appConfig } from "./config/appConfig";
 import errorMiddleware from "./middlewares/errorHandler";
-import "./config/passport";
 import mainRouter from "./routes";
-import passport from "passport";
 import { requestLogger } from "./middlewares/logger";
 import session from "express-session";
 import RedisStore from "connect-redis";
 import { redisClient } from "./utils/redis";
+import { prisma } from "./config/db";
 
 const app = express();
 const BASE_PATH = appConfig.BASE_PATH;
 
-app.set("trust proxy", 2);
+app.set("trust proxy", true);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -31,10 +30,7 @@ app.use(
   session({
     name: "proman-session",
     secret: appConfig.SESSION_SECRET,
-    store: new RedisStore({
-      client: redisClient,
-      prefix: "sess:",
-    }),
+    store: new RedisStore({ client: redisClient, prefix: "sess:" }),
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -42,45 +38,38 @@ app.use(
       httpOnly: true,
       sameSite: appConfig.NODE_ENV === "production" ? "none" : "lax",
       secure: appConfig.NODE_ENV === "production",
-      domain: undefined,
     },
   }),
 );
 
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(requestLogger);
-
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    message: "Running",
-  });
+app.use(async (req: Request, res, next) => {
+  const userId = (req.session as any).userId as string | undefined;
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) req.user = user as any;
+  }
+  next();
 });
 
-//Routes
-app.use(`${BASE_PATH}`, mainRouter);
+app.use(requestLogger);
 
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({ message: "Running" });
+});
+
+app.use(`${BASE_PATH}`, mainRouter);
 app.use(errorMiddleware);
 
 const server = app.listen(appConfig.PORT);
 
-server.on("listening", async () => {
+server.on("listening", () => {
   console.log(`Server running on http://localhost:${appConfig.PORT}`);
 });
 
-redisClient.on("connect", () => {
-  console.log("Redis connected");
-});
-
-redisClient.on("ready", () => {
-  console.log("Redis ready");
-});
-
+redisClient.on("connect", () => console.log("Redis connected"));
+redisClient.on("ready", () => console.log("Redis ready"));
 server.on("error", (err) => {
   console.log(err.message);
   process.exit(1);
 });
-
-redisClient.on("error", (err) => {
-  console.error("Redis error:", err);
-});
+redisClient.on("error", (err) => console.error("Redis error:", err));

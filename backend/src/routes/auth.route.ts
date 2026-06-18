@@ -1,9 +1,7 @@
 import { Router } from "express";
-import passport from "passport";
-import { appConfig } from "../config/appConfig";
 import {
   emailVerificationController,
-  googleLogin,
+  googleTokenController,
   userLoginController,
   userLogoutController,
   userRegistrationController,
@@ -12,22 +10,7 @@ import { authRateLimiter } from "../middlewares/authRatelimiter";
 
 const authRouter = Router();
 
-const failureUrl = `${appConfig.FRONTEND_GOOGLE_CALLBACK_URL}/?status=failure`;
-
-authRouter.get(
-  "/google",
-  authRateLimiter,
-  passport.authenticate("google", {
-    scope: ["email", "profile"],
-  }),
-);
-
-authRouter.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: failureUrl }),
-  googleLogin,
-);
-
+authRouter.post("/google/token", authRateLimiter, googleTokenController);
 authRouter.post("/register", authRateLimiter, userRegistrationController);
 authRouter.post("/login", authRateLimiter, userLoginController);
 authRouter.get("/verify-email/:token", emailVerificationController);

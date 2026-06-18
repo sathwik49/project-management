@@ -45,7 +45,7 @@ export const ENDPOINTS = {
     REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
-    GOOGLE: "/auth/google",
+    GOOGLE_TOKEN: "/auth/google/token",
   },
 
   USER: {

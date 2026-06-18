@@ -39,6 +39,11 @@ export const signUpMutation = async (
   return res.data;
 };
 
+export const googleTokenMutation = async (access_token: string) => {
+  const res = await api.post(ENDPOINTS.AUTH.GOOGLE_TOKEN, { access_token });
+  return res.data;
+};
+
 export const signInMutation = async (
   data: signInInputType,
 ): Promise<signInResponseType> => {

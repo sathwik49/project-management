@@ -18,21 +18,31 @@ interface Props {
   email?: string;
 }
 
+const saveUserSession = (req: Request, userId: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    (req.session as any).userId = userId;
+    req.session.save((err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+};
+
 export const loginOrCreateAccountService = async (data: Props) => {
   const { provider, displayName, providerId, picture, email } = data;
 
-  if (!email) {
-    throw new AppError("Email is required", 400);
-  }
+  if (!email) throw new AppError("Email is required", 400);
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
+  console.log("1. Finding user...");
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  console.log("2. Existing user:", existingUser?.id ?? "not found");
 
   const emailVerified = provider === "GOOGLE" || provider === "GITHUB";
 
   if (!existingUser) {
+    console.log("3. Creating new user in transaction...");
     const user = await prisma.$transaction(async (tx) => {
+      console.log("4. Creating user...");
       const createdUser = await tx.user.create({
         data: {
           name: displayName,
@@ -41,16 +51,15 @@ export const loginOrCreateAccountService = async (data: Props) => {
           lastLogin: new Date(),
         },
       });
+      console.log("5. User created:", createdUser.id);
 
+      console.log("6. Creating account...");
       await tx.account.create({
-        data: {
-          provider,
-          providerId,
-          emailVerified,
-          userId: createdUser.id,
-        },
+        data: { provider, providerId, emailVerified, userId: createdUser.id },
       });
+      console.log("7. Account created");
 
+      console.log("8. Creating workspace...");
       const workspace = await tx.workspace.create({
         data: {
           name: "My Workspace",
@@ -59,15 +68,15 @@ export const loginOrCreateAccountService = async (data: Props) => {
           ownerId: createdUser.id,
         },
       });
+      console.log("9. Workspace created:", workspace.id);
 
-      const role = await tx.role.findFirst({
-        where: { name: "OWNER" },
-      });
+      console.log("10. Finding role...");
+      const role = await tx.role.findFirst({ where: { name: "OWNER" } });
+      console.log("11. Role found:", role);
 
-      if (!role) {
-        throw new NotFoundError("Role not found");
-      }
+      if (!role) throw new NotFoundError("Role not found");
 
+      console.log("12. Creating member...");
       await tx.member.create({
         data: {
           userId: createdUser.id,
@@ -75,38 +84,29 @@ export const loginOrCreateAccountService = async (data: Props) => {
           roleId: role.name,
         },
       });
+      console.log("13. Member created");
 
+      console.log("14. Updating user workspace...");
       const updatedUser = await tx.user.update({
         where: { id: createdUser.id },
-        data: {
-          currentWorkspaceId: workspace.id,
-        },
+        data: { currentWorkspaceId: workspace.id },
       });
+      console.log("15. User updated");
 
-      return {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        profilePicture: updatedUser.profilePicture,
-        currentWorkspaceId: updatedUser.currentWorkspaceId,
-      };
+      return updatedUser;
     });
 
     return user;
   }
 
+  console.log("3. Updating existing user lastLogin...");
   await prisma.user.update({
     where: { email },
     data: { lastLogin: new Date() },
   });
+  console.log("4. Done");
 
-  return {
-    id: existingUser.id,
-    email: existingUser.email,
-    name: existingUser.name,
-    profilePicture: existingUser.profilePicture,
-    currentWorkspaceId: existingUser.currentWorkspaceId,
-  };
+  return existingUser;
 };
 
 export const userRegistrationService = async (data: {
@@ -117,19 +117,10 @@ export const userRegistrationService = async (data: {
   const { name, email, password } = data;
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
-
-  if (existingUser) {
-    throw new AppError("Email already in use", 400);
-  }
+  if (existingUser) throw new AppError("Email already in use", 400);
 
   const user = await prisma.$transaction(async (tx) => {
-    const createdUser = await tx.user.create({
-      data: {
-        name,
-        email,
-      },
-    });
-
+    const createdUser = await tx.user.create({ data: { name, email } });
     const hashedPassword = await hashValue(password);
 
     await tx.account.create({
@@ -150,13 +141,8 @@ export const userRegistrationService = async (data: {
       },
     });
 
-    const role = await tx.role.findFirst({
-      where: { name: "OWNER" },
-    });
-
-    if (!role) {
-      throw new NotFoundError("Role not found");
-    }
+    const role = await tx.role.findFirst({ where: { name: "OWNER" } });
+    if (!role) throw new NotFoundError("Role not found");
 
     await tx.member.create({
       data: {
@@ -168,19 +154,15 @@ export const userRegistrationService = async (data: {
 
     const updatedUser = await tx.user.update({
       where: { id: createdUser.id },
-      data: {
-        currentWorkspaceId: workspace.id,
-      },
+      data: { currentWorkspaceId: workspace.id },
     });
 
     return updatedUser;
   });
 
   const emailResponse = await checkEmailVerificationAndSendMail(user.email);
-
-  if (!emailResponse) {
+  if (!emailResponse)
     throw new AppError("Failed to send verification email", 500);
-  }
 
   return null;
 };
@@ -191,49 +173,28 @@ export const userLoginService = async (
 ) => {
   const { email, password } = data;
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!user) {
-    throw new AppError("Invalid credentials", 400);
-  }
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw new AppError("Invalid credentials", 400);
 
   const account = await prisma.account.findFirst({
-    where: {
-      userId: user.id,
-      provider: "EMAIL",
-    },
+    where: { userId: user.id, provider: "EMAIL" },
   });
 
-  if (!account || !account.password) {
+  if (!account || !account.password)
     throw new AppError("Use social login", 400);
-  }
 
   const isValid = await compareValues(password, account.password);
-
-  if (!isValid) {
-    throw new AppError("Invalid credentials", 400);
-  }
+  if (!isValid) throw new AppError("Invalid credentials", 400);
 
   if (!account.emailVerified) {
     const verified = await checkIsEmailVerified(email);
-
     if (!verified) {
       await checkEmailVerificationAndSendMail(email);
       throw new AppError("Please verify your email", 400);
     }
   }
 
-  await new Promise<void>((resolve, reject) => {
-    req.logIn(user, (err) => {
-      if (err) return reject(err);
-      req.session.save((err) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-  });
+  await saveUserSession(req, user.id);
 
   await prisma.user.update({
     where: { id: user.id },
@@ -246,43 +207,20 @@ export const userLoginService = async (
 export const emailVerificationService = async (token: string, req: Request) => {
   const tokenData = await checkEmailVerificationToken(token);
 
-  if (!tokenData || !tokenData.token) {
-    return { message: "Invalid or expired link" };
-  }
-
-  if (tokenData.expires < new Date()) {
-    return { message: "Token expired" };
-  }
+  if (!tokenData?.token) return { message: "Invalid or expired link" };
+  if (tokenData.expires < new Date()) return { message: "Token expired" };
 
   const account = await prisma.account.update({
-    where: {
-      providerId: tokenData.email,
-    },
+    where: { providerId: tokenData.email },
     data: {
       emailVerified: true,
-      user: {
-        update: {
-          lastLogin: new Date(),
-        },
-      },
+      user: { update: { lastLogin: new Date() } },
     },
-    include: {
-      user: true,
-    },
+    include: { user: true },
   });
 
   await deleteEmailVerificationTokens(tokenData.token, account.providerId);
-
-  await new Promise<void>((resolve, reject) => {
-    req.logIn(account.user, (err) => {
-      if (err) return reject(err);
-
-      req.session.save((err) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-  });
+  await saveUserSession(req, account.user.id);
 
   return {
     updatedUser: {

@@ -2,11 +2,14 @@ import { UserInterface } from "../utils/interfaces";
 
 declare global {
   namespace Express {
-    interface User extends UserInterface {}
     interface Request {
-      user?: User;
+      user?: UserInterface;
     }
   }
 }
 
-export {};
+declare module "express-session" {
+  interface SessionData {
+    userId: string;
+  }
+}
