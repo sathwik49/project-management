@@ -60,6 +60,7 @@ export default function SignUp() {
     onSuccess: async (tokenResponse: any) => {
       try {
         await googleTokenMutation(tokenResponse.access_token);
+        toast.success("Redirecting...");
         navigate(AUTH_REDIRECT_URL);
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -146,7 +147,7 @@ export default function SignUp() {
         onClick={() => googleLogin()}
       >
         <FcGoogle size={19} />
-        <span>Sign In with Google</span>
+        <span>Sign Up with Google</span>
       </button>
       <p className="text-center text-medium">
         Already have an account?{" "}

@@ -13,7 +13,7 @@ import { prisma } from "./config/db";
 const app = express();
 const BASE_PATH = appConfig.BASE_PATH;
 
-app.set("trust proxy", true);
+app.set("trust proxy", 2);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

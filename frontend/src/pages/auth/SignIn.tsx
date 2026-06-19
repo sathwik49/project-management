@@ -46,6 +46,7 @@ export default function SignIn() {
         const destination = backTo
           ? decodeURIComponent(backTo)
           : AUTH_REDIRECT_URL;
+          toast.success("Redirecting...")
         navigate(destination);
         reset();
       },
