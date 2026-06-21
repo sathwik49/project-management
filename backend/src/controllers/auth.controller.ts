@@ -14,12 +14,8 @@ import {
 import asyncHandler from "../middlewares/asyncHandler";
 import { ZodError } from "zod";
 
-export const googleTokenController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const googleTokenController = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { access_token } = req.body;
 
     if (!access_token) {
@@ -37,20 +33,15 @@ export const googleTokenController = async (
       },
     );
 
-    console.log("Google response status:", googleRes.status);
-
     if (!googleRes.ok) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Invalid Google token",
-          details: null,
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Google token",
+        details: null,
+      });
     }
 
     const profile = await googleRes.json();
-    console.log("Profile:", profile);
 
     const user = await loginOrCreateAccountService({
       provider: "GOOGLE",
@@ -59,8 +50,6 @@ export const googleTokenController = async (
       picture: profile.picture,
       email: profile.email,
     });
-
-    console.log("User:", user.id);
 
     (req.session as any).userId = user.id;
     await new Promise<void>((resolve, reject) => {
@@ -78,11 +67,8 @@ export const googleTokenController = async (
         currentWorkspaceId: user.currentWorkspaceId,
       },
     });
-  } catch (error) {
-    console.error("googleTokenController error:", error);
-    next(error);
-  }
-};
+  },
+);
 
 export const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {

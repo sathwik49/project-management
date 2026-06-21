@@ -5,7 +5,7 @@ import { joinWorkspace } from "@/api/api";
 import { QUERY_KEYS } from "@/lib/endpoints";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthUser } from "@/hooks/useAuthUser"; // Assuming this is your hook path
+import { useAuthUser } from "@/hooks/useAuthUser";
 import toast from "react-hot-toast";
 import axios from "axios";
 
